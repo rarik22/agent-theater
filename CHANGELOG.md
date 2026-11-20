@@ -22,6 +22,8 @@ The first public release.
 - Time-lapses of any past window (`/api/replay`) and a video exporter (`tools/render-video.mjs`) with
   title and end cards and multi-window cuts.
 - Public mode by default: generic phrases only, no commands, paths, names or secrets.
+- The README's pictures are drawn by the app itself: `tools/readme-media.mjs` films the sample in Node,
+  and `tools/gif.mjs` writes the stage's palette indices straight into lossless GIFs.
 - A Claude Code plugin that carries the whole app (the repository root is the plugin and its
   marketplace): it starts the server, adds `/theater`, a status-line entry and a pane of lanes and
   agents, and needs nothing from npm.

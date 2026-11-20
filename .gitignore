@@ -13,3 +13,4 @@ Thumbs.db
 
 # types Claude Code writes while the plugin is loaded from this folder
 .claude-plugin/types/
+.qa-profiles/
