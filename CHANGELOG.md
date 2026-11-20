@@ -1,6 +1,15 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.1 (2026-11-21)
+
+- The plugin now runs in VS Code's chat panel and the desktop app. Both start Claude Code as an SDK
+  session that reports no person at the prompt, so the plugin stayed idle there: no server, an empty
+  pane. It now wakes up when an app attaches to the session, or when someone types `/theater`. A plain
+  `claude -p` run still stays idle.
+- The README says how to install from a terminal, VS Code and the desktop app (where `/plugin` is not
+  available), and how to watch the stage in a VS Code tab with Simple Browser.
+
+## 0.1.0 (2026-11-20)
 
 The first public release.
 

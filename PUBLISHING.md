@@ -1,8 +1,8 @@
 # Publishing
 
-Everything is committed locally in `E:\agent-theater-release` on branch `main`. Nothing has been
-pushed or published yet. Run these steps when github.com resolves on this machine and the empty
-repository exists.
+The repository is on GitHub at <https://github.com/tarqmamdouh/agent-theater> (first pushed with
+v0.1.0 on 2026-11-20). Nothing is on npm yet. Section 1 is how the first push was made; later
+releases follow "Later releases" below.
 
 ## 1. GitHub
 
@@ -58,7 +58,7 @@ npm view agent-theater name        # "404 Not Found" means the name is still fre
 npm login
 npm publish --dry-run              # lists the files; no tests, plugin hooks, local/ or qa-local/
 npm publish
-npx -y agent-theater@0.1.0 --version   # prints 0.1.0
+npx -y agent-theater@0.1.1 --version   # prints 0.1.1
 ```
 
 If your npm account uses two-factor authentication, `npm publish` asks for a one-time code (or pass

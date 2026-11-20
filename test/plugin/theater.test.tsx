@@ -1,4 +1,4 @@
-import type { On, SessionMachine } from 'claude-code'
+import type { On, RenderSurface, SessionMachine } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 
 import { exitReason, launchPlan, listenerPid, settingsOf } from '../../hooks/launch'
@@ -80,12 +80,20 @@ type World = {
   killed: number
   ran: string[][]
   opened: string[]
+  fetched: number
 }
 
 /** Everything beneath the plugin: a theater server that answers while `isUp`. */
 function world(
   on: On,
-  options: { isUp?: boolean; state?: unknown; hasLocal?: boolean; machine?: SessionMachine; exit?: string } = {},
+  options: {
+    isUp?: boolean
+    state?: unknown
+    hasLocal?: boolean
+    machine?: SessionMachine
+    exit?: string
+    surfaces?: readonly RenderSurface[]
+  } = {},
 ): World {
   const seen: World = {
     isUp: options.isUp ?? false,
@@ -95,8 +103,11 @@ function world(
     killed: 0,
     ran: [],
     opened: [],
+    fetched: 0,
   }
   on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('session.attach', (_, e) => ({ clientId: e.clientId }))
+  on('session.surfaces', () => ({ value: options.surfaces ?? [] }))
   on('session.end', (_, e) => ({ sessionId: e.sessionId }))
   on('command.register', () => ({ value: { command: 'theater' } }))
   on('ui.open', (_, e) => {
@@ -111,6 +122,7 @@ function world(
   })
   on('ui.log', () => ({ value: undefined }))
   on('http.fetch', (_, e) => {
+    seen.fetched += 1
     if (!seen.isUp) throw new Error('connect ECONNREFUSED')
     const body = e.url.includes('/api/health') ? { ok: true, now: STATE.now, sources: {} } : seen.state
 
@@ -197,6 +209,71 @@ test('starts the server with npx when none runs, and stops it when the session e
   await $.session.end(END)
   expect(seen.killed).toBe(1)
   expect(seen.statuses.at(-1)).toBeUndefined()
+})
+
+// VS Code and the desktop app start Claude Code as an SDK session, and attach to draw after
+const APP_START = { cwd: '/', surface: null, isInteractive: false } as const
+const VSCODE = { surface: 'vscode', clientId: 'vscode:default' } as const
+const COMMAND = { command: 'theater', args: '', origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 100 } } as const
+
+test('in VS Code or the desktop app it starts once the app attaches', async ($, on) => {
+  const seen = world(on)
+  const clock = mock.clock(on)
+
+  await $.session.start(APP_START)
+  await clock.settle()
+  expect(seen.spawned).toEqual([])
+
+  await $.session.attach(VSCODE)
+  await clock.settle()
+  expect(seen.spawned).toEqual([['npx', '-y', 'agent-theater@0.1.0', '--port', '8790']])
+  expect(seen.statuses.at(-1)).toBe('Agent Theater · starting…')
+
+  await clock.advance(1000)
+  expect(seen.statuses.at(-1)).toBe('Agent Theater · 4 agents working · 18/40 runs')
+
+  await $.session.end(END)
+  expect(seen.killed).toBe(1)
+})
+
+test('an app already attached when the session starts counts too', async ($, on) => {
+  const seen = world(on, { isUp: true, surfaces: ['desktop'] })
+  const clock = mock.clock(on)
+
+  await $.session.start(APP_START)
+  await clock.settle()
+  expect(seen.statuses.at(-1)).toBe('Agent Theater · 4 agents working · 18/40 runs')
+  await $.session.end(END)
+  expect(seen.killed).toBe(0)
+})
+
+test('/theater works before any app attaches', async ($, on) => {
+  const seen = world(on)
+  const clock = mock.clock(on)
+
+  await $.session.start(APP_START)
+  await clock.settle()
+  const ran = await $.command.run(COMMAND)
+  expect(ran.text).toContain('(starting the server)')
+  expect(seen.spawned.length).toBe(1)
+
+  await clock.advance(1000)
+  expect(seen.statuses.at(-1)).toBe('Agent Theater · 4 agents working · 18/40 runs')
+  await $.session.end(END)
+  expect(seen.killed).toBe(1)
+})
+
+test('a claude -p run stays idle: no polls, no server', async ($, on) => {
+  const seen = world(on)
+  const clock = mock.clock(on)
+
+  await $.session.start(APP_START)
+  await clock.settle()
+  await clock.advance(30_000)
+  expect(seen.fetched).toBe(0)
+  expect(seen.spawned).toEqual([])
+  await $.session.end(END)
+  expect(seen.killed).toBe(0)
 })
 
 test('prefers a server.mjs in the plugin folder', async ($, on) => {

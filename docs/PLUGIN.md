@@ -22,11 +22,29 @@ From a shell:
 claude plugin install agent-theater --marketplace tarqmamdouh/agent-theater
 ```
 
-In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins,
-Add marketplace with `tarqmamdouh/agent-theater`, then Add plugin.
+`/plugin` opens a menu only a terminal can draw, so in VS Code, the desktop app and the web it answers
+"/plugin isn't available in this environment". There:
+
+- **VS Code:** run the shell line above in the editor's terminal, then start a new chat.
+- **The desktop app:** click + next to the prompt box, then Plugins, Add marketplace with
+  `tarqmamdouh/agent-theater`, then Add plugin.
+
+In VS Code, **Simple Browser: Show** (command palette) with `http://127.0.0.1:8790` shows the full
+stage in an editor tab.
+
+## When it runs
+
+The plugin polls the server, and starts one when autostart is on, only while someone is watching:
+
+- a terminal session (Claude Code's REPL);
+- a session an app attached to: VS Code's chat panel and the desktop app run Claude Code as an SDK
+  session and attach a moment after it starts, and the plugin wakes up then;
+- any session where a person typed `/theater`.
+
+A plain `claude -p` run, or an SDK script with nothing attached, stays idle: no polls and no server.
 
 Needs Node.js 24 or newer on the PATH. The repository root is the plugin, so an install carries the
-whole app (about 1.2 MB) and nothing comes from npm.
+whole app (about 6 MB, most of it the README's pictures) and nothing comes from npm.
 
 ## What it adds
 

@@ -54,7 +54,13 @@ You need Node.js 24 or newer. That's all: no dependencies, no build step.
 
 ### Inside Claude Code
 
-The repository is also a Claude Code plugin. At the prompt of a terminal session:
+The repository is also a Claude Code plugin. Install it from any terminal:
+
+```sh
+claude plugin install agent-theater --marketplace tarqmamdouh/agent-theater
+```
+
+or, at the prompt of Claude Code running in a terminal:
 
 ```text
 /plugin install agent-theater --marketplace tarqmamdouh/agent-theater
@@ -70,6 +76,25 @@ Answer `y` to add the marketplace and pick a scope. From then on the theater sta
 
 The plugin carries the whole app, so nothing is fetched from npm. Its options are in
 [docs/PLUGIN.md](docs/PLUGIN.md).
+
+#### In VS Code and the desktop app
+
+Typing `/plugin` there answers *"/plugin isn't available in this environment"*. It opens a menu that
+only a terminal can draw, so install with the `claude plugin install` line above instead:
+
+- **VS Code:** open the editor's terminal (<kbd>Ctrl</kbd>+<kbd>&#96;</kbd>), run the line there, then
+  start a new chat. The theater starts with the chat panel's sessions as it does in a terminal, and
+  `/theater` works there too.
+- **The desktop app:** click **+** next to the prompt box, then **Plugins**, **Add marketplace** with
+  `tarqmamdouh/agent-theater`, and **Add plugin**.
+
+To watch the stage without leaving VS Code, run **Simple Browser: Show** from the command palette
+(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) and give it `http://127.0.0.1:8790`. The stage opens in an
+editor tab you can dock beside the chat, and clicking an agent opens its log there as it does in a
+browser.
+
+Install it where your sessions live. On Windows, a Claude Code under WSL keeps its sessions apart from
+one on Windows, and the theater reads the sessions of the Claude Code it was installed in.
 
 ### On its own
 

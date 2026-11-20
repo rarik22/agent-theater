@@ -104,7 +104,10 @@ function freshRuntime(settings: Settings) {
     lastAutoStart: Number.NEGATIVE_INFINITY,
     isUserStopped: false,
     isWindows: false,
-    isInteractive: false,
+    // Someone is watching: the terminal's REPL, an app that attached to draw (VS Code, the
+    // desktop app, a phone), or a person who typed /theater. A plain `claude -p` run is none of
+    // these, so it never polls or starts a server.
+    isAttended: false,
     isClosing: false,
     isPolling: false,
     timer: null as Timer | null,
@@ -170,7 +173,7 @@ async function probe($: Engine, url: string): Promise<Probe> {
 const isTheaterHealth = (got: Probe): boolean => got.kind === 'json' && isObject(got.body) && got.body.ok === true
 
 function schedule($: Engine, ms: number): void {
-  if (rt.isClosing || !rt.isInteractive) return
+  if (rt.isClosing || !rt.isAttended) return
   rt.timer?.cancel()
   rt.timer = $.clock.after(ms, () => {
     rt.timer = null
@@ -221,7 +224,7 @@ async function poll($: Engine): Promise<void> {
     }
     const mayAutoStart =
       rt.cfg.autostart &&
-      rt.isInteractive &&
+      rt.isAttended &&
       !rt.isUserStopped &&
       rt.autoStarts < MAX_AUTO_STARTS &&
       now - rt.lastAutoStart >= AUTO_START_GAP_MS
@@ -378,6 +381,7 @@ async function openBrowser($: Engine, surface: RenderSurface): Promise<void> {
 
 /** Start on the person's word: autostart limits and an earlier stop no longer hold. */
 async function startFromPerson($: Engine): Promise<string> {
+  rt.isAttended = true
   rt.isUserStopped = false
   rt.autoStarts = 0
   if (rt.view.status === 'live') return ''
@@ -407,7 +411,10 @@ export const register: Register = (on, options) => {
   rt = freshRuntime(settingsOf(options))
 
   on('session.start', async ($, e, next) => {
-    rt.isInteractive = e.isInteractive
+    // VS Code and the desktop app run Claude Code as an SDK session (not interactive) and
+    // attach to draw a moment later: session.attach below wakes the plugin then
+    const surfaces = await $.session.surfaces().catch(() => [])
+    rt.isAttended = e.isInteractive || surfaces.length > 0
     rt.isClosing = false
     await $.command.register({
       name: 'theater',
@@ -419,6 +426,17 @@ export const register: Register = (on, options) => {
     schedule($, 0)
 
     return next(e)
+  })
+
+  // An app attached to draw this session (VS Code, the desktop app, a phone): someone is watching
+  on('session.attach', async ($, e, next) => {
+    const attached = await next(e)
+    if (!rt.isAttended && !rt.isClosing) {
+      rt.isAttended = true
+      schedule($, 0)
+    }
+
+    return attached
   })
 
   on('session.end', async ($, e, next) => {
