@@ -1,0 +1,4 @@
+{"type":"user","timestamp":"2026-11-19T11:30:00.000Z","agentId":"a12waiter","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:59:00.000Z","agentId":"a12waiter","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_fixture_015","name":"Bash","input":{"command":"bash tools/booth.sh run S12-TASK-02 pnpm test:e2e","run_in_background":true,"description":"Run e2e in a slot"}}]}}
+{"type":"user","timestamp":"2026-11-19T11:59:00.000Z","agentId":"a12waiter","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_fixture_015","content":"(fixture output)"}]}}
+{"type":"api-request-blob","agentId":"a12waiter","hash":"fixture","message":{"content":[{"type":"tool_use","id":"toolu_blob","name":"Write","input":{"file_path":"C:/Users/fixture-user/blob.txt"}},{"role":"assistant","type":"assistant"}]}}

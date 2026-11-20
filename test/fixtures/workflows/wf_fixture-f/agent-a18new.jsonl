@@ -1,0 +1,2 @@
+{"type":"user","timestamp":"2026-11-19T11:50:00.000Z","agentId":"a18new","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:59:30.000Z","agentId":"a18new","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_f18a","name":"Edit","input":{"file_path":"C:/wt/docs/decisions/OWNER_DECISIONS.md"}}]}}

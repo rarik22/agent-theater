@@ -1,0 +1,4 @@
+{"type":"user","timestamp":"2026-11-19T11:00:00.000Z","agentId":"a08stale","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:14:00.000Z","agentId":"a08stale","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_fixture_011","name":"Read","input":{"file_path":"C:/Users/fixture-user/x.md"}}]}}
+{"type":"user","timestamp":"2026-11-19T11:14:00.000Z","agentId":"a08stale","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_fixture_011","content":"(fixture output)"}]}}
+{"type":"api-request-blob","agentId":"a08stale","hash":"fixture","message":{"content":[{"type":"tool_use","id":"toolu_blob","name":"Write","input":{"file_path":"C:/Users/fixture-user/blob.txt"}},{"role":"assistant","type":"assistant"}]}}

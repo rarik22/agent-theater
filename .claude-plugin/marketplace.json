@@ -1,0 +1,12 @@
+{
+  "name": "agent-theater",
+  "owner": { "name": "tarqmamdouh", "url": "https://github.com/tarqmamdouh" },
+  "description": "Agent Theater: a live pixel-art stage of AI agents at work. Works with Claude Code.",
+  "plugins": [
+    {
+      "name": "agent-theater",
+      "source": "./plugin",
+      "description": "A live pixel-art stage of your AI agents at work: a status line entry, /theater, and a compact pane of agents and lanes beside the chat."
+    }
+  ]
+}

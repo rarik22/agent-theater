@@ -1,0 +1,4 @@
+{"type":"user","timestamp":"2026-11-19T11:50:00.000Z","agentId":"a05merge","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:58:00.000Z","agentId":"a05merge","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_fixture_008","name":"Bash","input":{"command":"bash /e/project/.runner/tools/hold.sh acquire develop merge-batch","run_in_background":true,"description":"Take the develop lock"}}]}}
+{"type":"user","timestamp":"2026-11-19T11:58:00.000Z","agentId":"a05merge","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_fixture_008","content":"(fixture output)"}]}}
+{"type":"api-request-blob","agentId":"a05merge","hash":"fixture","message":{"content":[{"type":"tool_use","id":"toolu_blob","name":"Write","input":{"file_path":"C:/Users/fixture-user/blob.txt"}},{"role":"assistant","type":"assistant"}]}}

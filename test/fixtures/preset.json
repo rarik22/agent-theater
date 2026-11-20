@@ -1,0 +1,126 @@
+{
+  "pipeline": {
+    "lanes": "jobs",
+    "laneTitles": {
+      "S03": "Planning",
+      "S05": "Assets"
+    }
+  },
+  "rules": {
+    "labels": [
+      {
+        "match": "^(S\\d{2}-(?:TASK-\\d{2}|GATE)|ITEM-[A-Z]+-\\d{3})(?:\\s+(.+))?$",
+        "job": "$1",
+        "suffix": "$2",
+        "tag": "$1",
+        "rolesByJob": [
+          {
+            "match": "-GATE$",
+            "role": "verifier"
+          }
+        ]
+      },
+      {
+        "match": "^(OPS-[A-Z0-9][A-Z0-9-]{0,40}?)(?:\\s+(.+))?$",
+        "job": "$1",
+        "suffix": "$2",
+        "tag": "$1",
+        "tagStrip": "^OPS-",
+        "tagFallback": "OPS"
+      },
+      {
+        "match": "^release\\s+v?(\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.]{1,12})?)(?:\\s+(.+))?$",
+        "job": "RELEASE-$1",
+        "suffix": "$2",
+        "tag": "REL-$1",
+        "roles": {
+          "fix": "fixer",
+          "review": "reviewer",
+          "prepare": "preparer",
+          "": "merger",
+          "*": "merger"
+        }
+      },
+      {
+        "match": "^integrate$",
+        "job": "RELEASE",
+        "tag": "RELEASE",
+        "role": "merger"
+      },
+      {
+        "match": "^verify\\s+v?(\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.]{1,12})?)$",
+        "job": "RELEASE-$1",
+        "tag": "REL-$1",
+        "role": "merger"
+      },
+      {
+        "match": "^verify\\s+release$",
+        "job": "RELEASE",
+        "tag": "RELEASE",
+        "role": "merger"
+      },
+      {
+        "match": "^fix\\s+v?(\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.]{1,12})?)(?:\\s+(.+))?$",
+        "job": "RELEASE-$1",
+        "suffix": "$2",
+        "tag": "REL-$1",
+        "roles": {
+          "review": "reviewer",
+          "": "fixer",
+          "*": "fixer"
+        }
+      }
+    ],
+    "jobId": "^(S\\d{2}-(?:TASK-\\d{2}|GATE)|ITEM-[A-Z]+-\\d{3})$",
+    "slugPrefix": "^agent/",
+    "laneOfJob": {
+      "match": "^(S\\d{2})-",
+      "value": "$1"
+    },
+    "laneId": "^S\\d{2}$",
+    "booth": {
+      "match": "\\bbooth\\.sh\\s+(run|exclusive)\\s+(\\S+)\\s*(.*)$",
+      "exclusive": "exclusive"
+    },
+    "lock": {
+      "match": "\\bhold\\.sh\\s+acquire\\s+(\\S+)(?:\\s+(\\S+))?"
+    },
+    "locks": {
+      "merge": "develop",
+      "exclusive": "exclusive",
+      "slotPrefix": "slot-"
+    },
+    "liveChecks": [
+      "ui:tour",
+      "test:e2e",
+      "backup:check",
+      "login:e2e",
+      "verify:full"
+    ],
+    "measures": [
+      "measure-tests",
+      "\\bmeasure/",
+      "\\bbefore\\.sh\\b",
+      "\\bafter\\.sh\\b"
+    ],
+    "standaloneTags": [
+      [
+        "\\brunner\\b",
+        "RUNNER"
+      ],
+      [
+        "\\btheat(er|re)\\b|\\bpixel\\b|\\bstage\\b",
+        "THEATER"
+      ],
+      [
+        "\\bengine\\b",
+        "ENGINE"
+      ],
+      [
+        "\\bplan-(\\d{1,3})\\b",
+        "PLAN-$1"
+      ]
+    ],
+    "relaunchByLabel": true
+  }
+}

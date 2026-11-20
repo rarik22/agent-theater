@@ -1,0 +1,5 @@
+{"type":"user","timestamp":"2026-11-19T11:10:00.000Z","agentId":"a04fix","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:20:00.000Z","agentId":"a04fix","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_fixture_007","name":"Edit","input":{"file_path":"C:/Users/fixture-user/project/src/assets.ts","old_string":"a","new_string":"b"}}]}}
+{"type":"user","timestamp":"2026-11-19T11:20:00.000Z","agentId":"a04fix","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_fixture_007","content":"(fixture output)"}]}}
+{"type":"assistant","timestamp":"2026-11-19T11:21:00.000Z","agentId":"a04fix","message":{"role":"assistant","content":[{"type":"thinking","thinking":"(fixture)"}]}}
+{"type":"api-request-blob","agentId":"a04fix","hash":"fixture","message":{"content":[{"type":"tool_use","id":"toolu_blob","name":"Write","input":{"file_path":"C:/Users/fixture-user/blob.txt"}},{"role":"assistant","type":"assistant"}]}}

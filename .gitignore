@@ -1,0 +1,12 @@
+# local, private and generated files (never in the repository or the npm package)
+local/
+qa-local/
+qa/
+exports/
+config.json
+agent-theater.config.json
+*.local.json
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

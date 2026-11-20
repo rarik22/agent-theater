@@ -1,0 +1,3 @@
+{"type":"launched"}
+{"type":"started","key":"v2:fixture-a03review","agentId":"a03review","label":"S05-TASK-02 review 1","phase":"Review"}
+{"type":"started","key":"v2:fixture-a04fix","agentId":"a04fix","label":"S05-TASK-02 fix 1","phase":"Review"}

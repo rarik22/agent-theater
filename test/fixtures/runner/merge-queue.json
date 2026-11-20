@@ -1,0 +1,107 @@
+{
+  "entries": [
+    {
+      "slug": "s00-task-01",
+      "id": "S00-TASK-01",
+      "phase": "S00",
+      "kind": "core",
+      "title": "Workspace",
+      "branch": "agent/s00-task-01",
+      "status": "merged",
+      "readyAt": "2026-11-18T08:00:00.000Z",
+      "updatedAt": "2026-11-18T09:00:00.000Z",
+      "mergedAt": "2026-11-18T09:00:00.000Z",
+      "bounces": []
+    },
+    {
+      "slug": "s05-task-01",
+      "id": "S05-TASK-01",
+      "phase": "S05",
+      "kind": "core",
+      "title": "Asset storage",
+      "branch": "agent/s05-task-01",
+      "status": "merged",
+      "batch": 2,
+      "readyAt": "2026-11-19T10:40:00.000Z",
+      "updatedAt": "2026-11-19T11:10:00.000Z",
+      "mergedAt": "2026-11-19T11:10:00.000Z",
+      "bounces": []
+    },
+    {
+      "slug": "s05-task-02",
+      "id": "S05-TASK-02",
+      "phase": "S05",
+      "kind": "core",
+      "title": "Asset revisions",
+      "branch": "agent/s05-task-02",
+      "status": "bounced",
+      "readyAt": "2026-11-19T10:45:00.000Z",
+      "updatedAt": "2026-11-19T11:08:00.000Z",
+      "bounces": [
+        {
+          "batch": 2,
+          "reason": "verify:full failed in C:/Users/fixture-user/wt",
+          "note": "see secret-notes.txt",
+          "at": "2026-11-19T11:08:00.000Z"
+        }
+      ]
+    },
+    {
+      "slug": "s12-task-01",
+      "id": "S12-TASK-01",
+      "phase": "S12",
+      "kind": "core",
+      "title": "Discussions",
+      "branch": "agent/s12-task-01",
+      "status": "batched",
+      "batch": 3,
+      "readyAt": "2026-11-19T11:20:00.000Z",
+      "updatedAt": "2026-11-19T11:50:00.000Z",
+      "bounces": []
+    },
+    {
+      "slug": "s03-task-01",
+      "id": "S03-TASK-01",
+      "phase": "S03",
+      "kind": "core",
+      "title": "Work item types",
+      "branch": "agent/s03-task-01",
+      "status": "ready",
+      "readyAt": "2026-11-19T11:30:00.000Z",
+      "updatedAt": "2026-11-19T11:30:00.000Z",
+      "bounces": []
+    },
+    {
+      "slug": "image-tag",
+      "id": "OPS-IMAGE-TAG",
+      "phase": "controller",
+      "kind": "controller",
+      "title": "Per-job image tags",
+      "branch": "agent/image-tag",
+      "status": "ready",
+      "readyAt": "2026-11-19T11:45:00.000Z",
+      "updatedAt": "2026-11-19T11:45:00.000Z",
+      "bounces": []
+    }
+  ],
+  "batches": [
+    {
+      "n": 2,
+      "slugs": [
+        "s05-task-01",
+        "s05-task-02"
+      ],
+      "startedAt": "2026-11-19T10:50:00.000Z",
+      "status": "passed",
+      "finishedAt": "2026-11-19T11:12:00.000Z"
+    },
+    {
+      "n": 3,
+      "slugs": [
+        "s12-task-01"
+      ],
+      "startedAt": "2026-11-19T11:50:00.000Z",
+      "status": "running"
+    }
+  ]
+}

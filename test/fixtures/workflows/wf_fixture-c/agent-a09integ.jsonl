@@ -1,0 +1,3 @@
+{"type":"user","timestamp":"2026-11-19T11:20:00.000Z","agentId":"a09integ","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:59:50.000Z","agentId":"a09integ","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_fixture_012","name":"Bash","input":{"command":"docker compose -f infra/compose.yaml up -d","description":"Start the stack"}}]}}
+{"type":"api-request-blob","agentId":"a09integ","hash":"fixture","message":{"content":[{"type":"tool_use","id":"toolu_blob","name":"Write","input":{"file_path":"C:/Users/fixture-user/blob.txt"}},{"role":"assistant","type":"assistant"}]}}

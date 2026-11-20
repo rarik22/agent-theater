@@ -1,0 +1,5 @@
+{"type":"user","timestamp":"2026-11-19T11:50:00.000Z","agentId":"a14ghost","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:57:00.000Z","agentId":"a14ghost","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_d14a","name":"Bash","input":{"command":"pnpm exec vitest run"}}]}}
+{"type":"user","timestamp":"2026-11-19T11:57:05.000Z","agentId":"a14ghost","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_d14a","content":"(fixture output)"}]}}
+{"type":"api-request","timestamp":"2026-11-19T11:57:06.000Z"}
+{"type":"user","timestamp":"2026-11-19T11:58:00.000Z","agentId":"a14ghost","message":{"role":"user","content":[{"type":"text","text":"[Request interrupted by user]"}]}}

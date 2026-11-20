@@ -1,0 +1,4 @@
+{"type":"user","timestamp":"2026-11-19T10:00:00.000Z","agentId":"a01setup","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T10:01:00.000Z","agentId":"a01setup","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_fixture_001","name":"Bash","input":{"command":"git worktree add C:/Users/fixture-user/wt","description":"Create the worktree"}}]}}
+{"type":"user","timestamp":"2026-11-19T10:01:00.000Z","agentId":"a01setup","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_fixture_001","content":"(fixture output)"}]}}
+{"type":"api-request-blob","agentId":"a01setup","hash":"fixture","message":{"content":[{"type":"tool_use","id":"toolu_blob","name":"Write","input":{"file_path":"C:/Users/fixture-user/blob.txt"}},{"role":"assistant","type":"assistant"}]}}

@@ -1,0 +1,2 @@
+{"type":"user","timestamp":"2026-11-19T11:30:00.000Z","agentId":"s01runner","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:59:00.000Z","agentId":"s01runner","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_s01a","name":"Bash","input":{"command":"cd C:/runner/tools && node --test queue.test.mjs","description":"Run the queue tests"}}]}}

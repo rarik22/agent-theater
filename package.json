@@ -1,0 +1,56 @@
+{
+  "name": "agent-theater",
+  "version": "0.1.0",
+  "description": "A live pixel-art stage of AI agents at work, with a video exporter. Works with Claude Code workflows and subagents, and with any agent tool through a small event API.",
+  "keywords": [
+    "agents",
+    "ai-agents",
+    "claude-code",
+    "workflows",
+    "pixel-art",
+    "dashboard",
+    "visualization",
+    "time-lapse"
+  ],
+  "homepage": "https://github.com/tarqmamdouh/agent-theater#readme",
+  "bugs": {
+    "url": "https://github.com/tarqmamdouh/agent-theater/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tarqmamdouh/agent-theater.git"
+  },
+  "license": "SEE LICENSE IN LICENSE.md",
+  "author": "tarqmamdouh (https://github.com/tarqmamdouh)",
+  "type": "module",
+  "bin": {
+    "agent-theater": "bin/agent-theater.mjs"
+  },
+  "main": "server.mjs",
+  "exports": {
+    ".": "./server.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "public/",
+    "presets/",
+    "tools/",
+    "docs/*.md",
+    "server.mjs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE.md"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "summary": "node server.mjs --once",
+    "test": "node --test test/",
+    "test:plugin": "claude plugin test plugin",
+    "validate:plugin": "claude plugin validate --strict plugin"
+  }
+}

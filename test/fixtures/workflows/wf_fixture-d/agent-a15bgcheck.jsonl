@@ -1,0 +1,4 @@
+{"type":"user","timestamp":"2026-11-19T11:25:00.000Z","agentId":"a15bgcheck","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:30:00.000Z","agentId":"a15bgcheck","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_d15a","name":"Bash","input":{"command":"cd C:/wt && pnpm backup:check > drill.log 2>&1; echo exit $?","run_in_background":true,"description":"Run the backup drill"}}]}}
+{"type":"user","timestamp":"2026-11-19T11:30:01.000Z","agentId":"a15bgcheck","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_d15a","content":"Command running in background with ID: bfx15. Output is being written to: C:\\fixture\\tasks\\bfx15.output."}]}}
+{"type":"assistant","timestamp":"2026-11-19T11:30:30.000Z","agentId":"a15bgcheck","message":{"role":"assistant","content":[{"type":"text","text":"Waiting for the drill."}]}}

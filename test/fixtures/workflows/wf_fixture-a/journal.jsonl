@@ -1,0 +1,4 @@
+{"type":"launched"}
+{"type":"started","key":"v2:fixture-a01setup","agentId":"a01setup","label":"S03-TASK-02 setup","phase":"Setup"}
+{"type":"result","key":"v2:fixture-a01setup","agentId":"a01setup","result":{"summary":"(fixture result)"},"toolsUsed":["Bash"]}
+{"type":"started","key":"v2:fixture-a02coder","agentId":"a02coder","label":"S03-TASK-02","phase":"Implement"}

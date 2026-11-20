@@ -1,0 +1,106 @@
+{
+  "asOf": "2026-11-19",
+  "develop": "abc1234",
+  "totals": {
+    "jobs": 12,
+    "features": 1,
+    "done": 5,
+    "progress": 7,
+    "left": 7
+  },
+  "phases": {
+    "S00": "Foundation",
+    "S01": "Accounts",
+    "S02": "Interface",
+    "S03": "Planning",
+    "S04": "Documentation",
+    "S05": "Assets",
+    "S12": "Collaboration"
+  },
+  "jobs": [
+    {
+      "id": "S00-TASK-01",
+      "phase": "S00",
+      "kind": "core",
+      "title": "Workspace",
+      "status": "done"
+    },
+    {
+      "id": "S00-TASK-02",
+      "phase": "S00",
+      "kind": "core",
+      "title": "Docker stack",
+      "status": "done"
+    },
+    {
+      "id": "S01-TASK-01",
+      "phase": "S01",
+      "kind": "core",
+      "title": "Identity",
+      "status": "done"
+    },
+    {
+      "id": "S01-GATE",
+      "phase": "S01",
+      "kind": "gate",
+      "title": "Phase acceptance gate",
+      "status": "done"
+    },
+    {
+      "id": "ITEM-STU-002",
+      "phase": "S01",
+      "kind": "feature",
+      "title": "Studio workspaces",
+      "status": "done"
+    },
+    {
+      "id": "S02-TASK-06",
+      "phase": "S02",
+      "kind": "core",
+      "title": "Screenshot and contrast audits",
+      "status": "progress"
+    },
+    {
+      "id": "S03-TASK-01",
+      "phase": "S03",
+      "kind": "core",
+      "title": "Work item types",
+      "status": "progress"
+    },
+    {
+      "id": "S03-TASK-02",
+      "phase": "S03",
+      "kind": "core",
+      "title": "Filtered backlog and saved views",
+      "status": "progress"
+    },
+    {
+      "id": "S04-TASK-02",
+      "phase": "S04",
+      "kind": "core",
+      "title": "Page revision history",
+      "status": "progress"
+    },
+    {
+      "id": "S05-TASK-01",
+      "phase": "S05",
+      "kind": "core",
+      "title": "Asset storage",
+      "status": "progress"
+    },
+    {
+      "id": "S05-TASK-02",
+      "phase": "S05",
+      "kind": "core",
+      "title": "Asset revisions",
+      "status": "progress"
+    },
+    {
+      "id": "S12-TASK-02",
+      "phase": "S12",
+      "kind": "core",
+      "title": "Live notifications",
+      "status": "progress"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{"type":"user","timestamp":"2026-11-19T11:20:00.000Z","agentId":"a17old","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:40:00.000Z","agentId":"a17old","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_e17a","name":"Bash","input":{"command":"bash tools/booth.sh exclusive release-trains bash .runner/measure/before.sh > before.out 2>&1","run_in_background":true}}]}}
+{"type":"user","timestamp":"2026-11-19T11:40:01.000Z","agentId":"a17old","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_e17a","content":"Command running in background with ID: bfx17. Output is being written to: C:\\fixture\\tasks\\bfx17.output."}]}}
+{"type":"assistant","timestamp":"2026-11-19T11:49:00.000Z","agentId":"a17old","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_e17b","name":"Read","input":{"file_path":"C:/wt/docs/x.md"}}]}}
+{"type":"user","timestamp":"2026-11-19T11:49:01.000Z","agentId":"a17old","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_e17b","content":"(fixture output)"}]}}

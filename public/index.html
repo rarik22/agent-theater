@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06060d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Agent Theater</title>
+<meta name="description" content="A live, high-fidelity pixel-art stage of AI agents at work.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%23111a2f'/%3E%3Crect x='2' y='1' width='4' height='1' fill='%23d6672b'/%3E%3Crect x='1' y='2' width='6' height='2' fill='%23e19a73'/%3E%3Crect x='2' y='2' width='5' height='1' fill='%239a3d1d'/%3E%3Crect x='3' y='3' width='1' height='1' fill='%23316ece'/%3E%3Crect x='5' y='3' width='1' height='1' fill='%23316ece'/%3E%3Crect x='2' y='4' width='4' height='3' fill='%236744b2'/%3E%3Crect x='2' y='7' width='1' height='1' fill='%23272a3c'/%3E%3Crect x='5' y='7' width='1' height='1' fill='%23272a3c'/%3E%3C/svg%3E">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  /* one fixed screen: no scrolling, no rubber-band overscroll, no double-tap zoom or text selection (pinch zoom stays available) */
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body { position: fixed; inset: 0; background: #06060d; color: #c7cfe0; font: 15px/1.45 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  #stage { position: fixed; display: block; image-rendering: pixelated; image-rendering: crisp-edges; background: #0a0b17; }
+  .stage-error { position: fixed; left: calc(16px + env(safe-area-inset-left)); bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 9; max-width: min(640px, calc(100vw - 32px)); margin: 0; padding: 10px 14px; border: 2px solid #e3474c; background: #0a0b17; color: #eaeff6; font-weight: 700; }
+  .stage-error[hidden] { display: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+</style>
+</head>
+<body>
+<canvas id="stage" role="img" aria-label="Pixel-art stage of AI agents at work"></canvas>
+<div id="sr" class="sr-only" aria-live="polite"></div>
+<p id="stage-error" class="stage-error" role="alert" hidden></p>
+<pre id="probe" hidden></pre>
+<script>
+  window.addEventListener('error', function (e) {
+    var el = document.getElementById('stage-error');
+    if (!el) return;
+    el.hidden = false;
+    el.textContent = 'The stage hit an error: ' + (e.message || 'unknown') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '');
+  });
+</script>
+<script type="module" src="/hd/hd-stage.mjs"></script>
+</body>
+</html>

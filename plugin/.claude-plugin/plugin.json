@@ -1,0 +1,40 @@
+{
+  "name": "agent-theater",
+  "displayName": "Agent Theater",
+  "version": "0.1.0",
+  "description": "A live pixel-art stage of your AI agents at work: a status line entry, /theater, and a compact pane of agents and lanes beside the chat. Works with Claude Code.",
+  "author": { "name": "tarqmamdouh", "url": "https://github.com/tarqmamdouh" },
+  "homepage": "https://github.com/tarqmamdouh/agent-theater",
+  "repository": "https://github.com/tarqmamdouh/agent-theater",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "keywords": ["agents", "pixel-art", "status-line", "pane", "dashboard"],
+  "types": "./types/index.d.ts",
+  "network": { "hosts": ["127.0.0.1"] },
+  "userConfig": {
+    "port": {
+      "type": "number",
+      "title": "Port",
+      "description": "Port of the Agent Theater server on 127.0.0.1. A theater already running there is reused.",
+      "default": 8790,
+      "min": 1,
+      "max": 65535
+    },
+    "autostart": {
+      "type": "boolean",
+      "title": "Start the server",
+      "description": "Start the theater server when a session starts and none is running. The session stops it again when it ends.",
+      "default": true
+    },
+    "sample": {
+      "type": "boolean",
+      "title": "Sample data",
+      "description": "Show the labelled sample simulation instead of live data.",
+      "default": false
+    },
+    "config": {
+      "type": "file",
+      "title": "Server config file",
+      "description": "Optional. A config file the plugin passes to the server it starts, as --config."
+    }
+  }
+}

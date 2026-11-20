@@ -1,0 +1,2 @@
+{"type":"user","timestamp":"2026-11-19T11:00:00.000Z","agentId":"s03quiet","message":{"role":"user","content":"(fixture prompt)"}}
+{"type":"assistant","timestamp":"2026-11-19T11:20:00.000Z","agentId":"s03quiet","message":{"role":"assistant","content":[{"type":"text","text":"Report."}]}}

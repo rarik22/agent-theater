@@ -1,0 +1,6 @@
+{"type":"launched"}
+{"type":"started","key":"v2:fixture-a13think","agentId":"a13think","label":"S07-TASK-02 fix 1","phase":"Review"}
+{"type":"started","key":"v2:fixture-a14ghost","agentId":"a14ghost","label":"S04-TASK-03","phase":"Implement"}
+{"type":"started","key":"v2:fixture-a15bgcheck","agentId":"a15bgcheck","label":"S08-TASK-01 prepare","phase":"Prepare"}
+{"type":"started","key":"v2:fixture-a16bgdone","agentId":"a16bgdone","label":"S09-TASK-01","phase":"Implement"}
+{"type":"started","key":"v2:fixture-a19poll","agentId":"a19poll","label":"S03-TASK-03 review 1","phase":"Review"}

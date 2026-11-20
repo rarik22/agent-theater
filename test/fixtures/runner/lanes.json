@@ -1,0 +1,31 @@
+{
+  "updated": "2026-11-19T11:00Z",
+  "workflowScript": "C:/Users/fixture-user/project/.runner/workflows/team-job.js",
+  "lanes": {
+    "S03": {
+      "job": "S03-TASK-02",
+      "task": "wfixture1",
+      "next": [
+        "S03-TASK-03"
+      ],
+      "base": "agent/s03-task-01"
+    },
+    "S04": {
+      "job": "S04-TASK-02",
+      "task": "wfixture2",
+      "next": [
+        "S04-TASK-03"
+      ]
+    },
+    "S05": {
+      "job": "S05-TASK-03",
+      "task": "wfixture3",
+      "next": [
+        "S05-TASK-04"
+      ]
+    }
+  },
+  "waiting": {
+    "S06": "after merge batch 1 (fixture-user note)"
+  }
+}

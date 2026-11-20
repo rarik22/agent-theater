@@ -1,0 +1,10 @@
+{"type":"launched"}
+{"type":"started","key":"v2:fixture-a05merge","agentId":"a05merge","label":"merge batch","phase":"Merge batch"}
+{"type":"started","key":"v2:fixture-a06lens","agentId":"a06lens","label":"review:safety","phase":"Review"}
+{"type":"started","key":"v2:fixture-a07prep","agentId":"a07prep","label":"S04-TASK-02 prepare","phase":"Prepare"}
+{"type":"started","key":"v2:fixture-a08stale","agentId":"a08stale","label":"verify:all","phase":"Verify"}
+{"type":"started","key":"v2:fixture-a09integ","agentId":"a09integ","label":"S02-TASK-06 integrate","phase":"Integrate"}
+{"type":"started","key":"v2:fixture-a10probe","agentId":"a10probe","label":"probe","phase":"Probe"}
+{"type":"started","key":"v2:fixture-a11gate","agentId":"a11gate","label":"S01-GATE","phase":"Gate"}
+{"type":"result","key":"v2:fixture-a11gate","agentId":"a11gate","result":{"summary":"(fixture result)"},"toolsUsed":["Bash"]}
+{"type":"started","key":"v2:fixture-a12waiter","agentId":"a12waiter","label":"S12-TASK-02","phase":"Implement"}
