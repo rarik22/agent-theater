@@ -163,6 +163,9 @@ function syncAgents(world, scene, snap) {
       }
     }
     if (e.role && e.role !== a.role) e.look = lookFor(a.role, e.seed);
+    // a new line for the speech bubble is lettered in from now (a first state shows it whole)
+    if (e.say !== a.say) e.sayT0 = snap ? -Infinity : world.t;
+    Object.assign(e, { say: a.say, actSince: a.actSince, background: a.background });
     e.state = 'here';
     Object.assign(e, { role: a.role, kind: a.kind, job: a.job, lane: a.lane, tag: a.tag || null, place: a.place, row: a.place === 'lane' ? a.row : null, station: a.place === 'lane' ? a.station : null, tx: tgt.x, ty: tgt.y, restFacing: tgt.facing });
     if (snap || world.calm) {

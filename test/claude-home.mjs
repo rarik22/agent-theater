@@ -12,6 +12,8 @@ const ms = (hms, day = '19') => Date.parse(`2026-11-${day}T${hms}.000Z`);
 
 const lines = (rows) => `${rows.map((r) => JSON.stringify(r)).join('\n')}\n`;
 const use = (hms, id, name, input) => ({ type: 'assistant', timestamp: `2026-11-19T${hms}.000Z`, message: { role: 'assistant', content: [{ type: 'tool_use', id, name, input }] } });
+const say = (hms, text) => ({ type: 'assistant', timestamp: `2026-11-19T${hms}.000Z`, message: { role: 'assistant', content: [{ type: 'text', text }] } });
+const ask = (hms, text) => ({ type: 'user', timestamp: `2026-11-19T${hms}.000Z`, message: { role: 'user', content: text } });
 const result = (hms, id, text = 'ok') => ({ type: 'user', timestamp: `2026-11-19T${hms}.000Z`, message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: id, content: text }] } });
 
 function touch(path, at) {
@@ -52,7 +54,7 @@ export function setupClaudeHome(overrides = {}) {
   // 2. a running run without a record, launched with an inline script (args.id BUG-42): Reproduce > Fix > Verify
   run('wf_fix-b2', [started('b2repro', 'reproduce', 'Reproduce'), done('b2repro'), started('b2fix', 'fix', 'Fix')], [
     ['b2repro', [use('11:20:00', 'u5', 'Bash', { command: 'pnpm vitest run cart' })], ms('11:40:00')],
-    ['b2fix', [use('11:40:00', 'u6', 'Edit', { file_path: 'src/cart.ts' }), use('11:59:00', 'u7', 'Bash', { command: 'pnpm vitest run', run_in_background: true }), result('11:59:01', 'u7', 'Command running in background with ID: b1')], ms('11:59:01')],
+    ['b2fix', [ask('11:40:00', 'Fix the rounding bug in the cart total. Questions to alice@example.com.'), use('11:40:00', 'u6', 'Edit', { file_path: 'src/cart.ts' }), say('11:58:50', 'Fixing the **cart total** rounding in /home/dev/shop/src/cart.ts. The token ghp_abcdefgh12345678 stays out of the logs.'), use('11:59:00', 'u7', 'Bash', { command: 'pnpm vitest run', run_in_background: true }), result('11:59:01', 'u7', 'Command running in background with ID: b1')], ms('11:59:01')],
   ]);
 
   // 3. a run stopped at 11:59 (record: killed); its agent never wrote a result: Draft > Review

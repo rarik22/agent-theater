@@ -10,6 +10,7 @@ or `[::1]` on its port.
 | `GET /api/replay?hours=8&frames=240` | A time-lapse: events plus evenly spaced state frames for the last N hours |
 | `GET /api/replay?from=<ISO>&to=<ISO>&frames=600` | The same for a past window (at most `replay.maxHours`; a window ending after now stops at now; a bad window answers 400 with `{ error }`) |
 | `GET /api/health` | `{ ok, now, sources }` |
+| `GET /api/agent?id=<agent id>` | An agent's log (below): what a click on an agent opens. 400 for a malformed id, 404 for one the theater does not know |
 | `POST /api/events` | The event API ([EVENTS.md](EVENTS.md)) |
 
 Query flags on every `GET` endpoint:
@@ -29,7 +30,7 @@ Query flags on every `GET` endpoint:
               lanes: [{ id, tag, stations: [{ tag, kind }], current, done, status, show, active,
                         progress: { done, total } }] },
   agents: [{ id, role, job, lane, station, stationTag, tag, place?, standalone?, title, label,
-             since, activeAt, action: { kind, text, background? } }],
+             since, activeAt, say, action: { kind, text, since, background? } }],
   queue: { entries: [{ slug, id, lane, status, title, kind, bounces, readyAt }],
            batch: { n, slugs, startedAt, status } | null, lastBatch },
   slots: [{ n, holder, job, lane, since }], exclusive: { holder, job, lane, since } | null,
@@ -57,8 +58,11 @@ Query flags on every `GET` endpoint:
   the merge machine; anyone else stands on the dock. `job` keys hand-overs: agents of one workflow run
   share it (`RUN-<run id>`), so the next phase's agent walks over from the last one's spot.
   `action.kind` is `edit`, `read`, `search`, `run`, `test`, `browser`, `docker`, `think` or `wait`;
-  `action.text` is a generic phrase in public mode. `background: true` means the agent waits on a
-  background command that is doing what the phrase says.
+  `action.text` is a generic phrase in public mode; `action.since` is when the action started.
+  `background: true` means the agent waits on a background command that is doing what the phrase says.
+  `say` is the line its speech bubble shows: the generic phrase in public mode; in the private view
+  the first sentence of the agent's latest message (redacted, at most 140 characters) while it is less
+  than 15 minutes old, else the action's text.
 - **slots**: the test pods. With a locks source they are its owners; otherwise they hold the agents
   that run tests or checks in the background.
 - **events**, oldest first, each with a stable `id`: `started` and `finished` (agents), `done` and
@@ -80,3 +84,26 @@ run records and transcripts' tool-use history (lanes, stations and agents), the 
 (the yard and counters). A short agent session between two frames still shows for one frame, and the
 sessions of one run hand over in one frame, so a time-lapse never skips work or teleports anyone.
 Event-API agents are live only. To play a time-lapse, map `frames` onto 15 to 60 seconds.
+
+## Agent log
+
+`GET /api/agent?id=<id>` answers for any agent in the state (live, a time-lapse frame, the sample with
+`sample=1`, or the event API's `ev-…` ids) and for agents that left the stage recently. The id is looked
+up among the agents the sources listed; no path or file name is ever taken from the request.
+
+```text
+{ id, role, tag, title, label, lane, stationTag, status, since, activeAt, say, action, public,
+  entries: [...], omitted }
+```
+
+- **status**: `working` (on stage now), `finished`, `failed`, `stopped`, or `ended` (it went quiet).
+- **Public mode**: `entries` are steps only, `{ t, kind, text, count, until }`: when an action started,
+  its generic phrase, how many tool calls in a row it covered and when the last one was. Nothing from
+  the transcript itself.
+- **Private view** (`public=0`): the transcript as `{ t, type, ... }` entries, every text redacted
+  (secrets, e-mail addresses, home folders) and cut to a length: `task` and `user` (messages to the
+  agent), `say` (what it wrote), `tool` (`name`, `kind`, `text`: a short description, `detail`: its
+  command, file, pattern or address, `background`), `result` (`text`, `error`, `chars` when cut),
+  `notice` (a background command ended: `status`), `stop`, and `event` for event-API agents.
+- **omitted**: how many earlier entries are left out (a number, or `"some"` when a very long transcript
+  was read from near its end). At most 1500 entries are kept.

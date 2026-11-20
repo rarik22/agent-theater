@@ -5,15 +5,15 @@
 //   agent-theater --once                        print a one-shot summary of the live state and exit
 //
 // API: GET /api/state, GET /api/stream (Server-Sent Events, every pushSeconds), GET /api/replay?hours=8,
-// GET /api/health, POST /api/events (the event API, docs/EVENTS.md). Query: public=0 shows redacted tool
+// GET /api/health, GET /api/agent?id= (an agent's log), POST /api/events (the event API, docs/EVENTS.md). Query: public=0 shows redacted tool
 // descriptions (default public=1: generic phrases), sample=1 serves the labelled sample simulation.
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, resolve, sep } from 'node:path';
 import { APP_DIR, configPath, loadConfig } from './lib/config.mjs';
 import { buildReplay, replayWindow } from './lib/replay.mjs';
-import { sampleReplay, sampleState } from './lib/sample.mjs';
-import { buildLiveState, createTheater } from './lib/state.mjs';
+import { sampleAgentLog, sampleReplay, sampleState } from './lib/sample.mjs';
+import { buildAgentLog, buildLiveState, createTheater } from './lib/state.mjs';
 
 const HOST = '127.0.0.1';
 
@@ -260,6 +260,14 @@ export function createTheaterServer(cfg, options = {}) {
           }
         }
         return sendJson(req, res, 200, await getReplay({ hours, frames, publicMode, sample, ...win }));
+      }
+      if (url.pathname === '/api/agent') {
+        // the log behind a click on an agent: steps only in public mode, the redacted transcript with ?public=0
+        const id = url.searchParams.get('id') || '';
+        if (!/^[A-Za-z0-9._:-]{1,100}$/.test(id)) return sendJson(req, res, 400, { error: 'give the id of an agent on stage' });
+        const log = sample ? sampleAgentLog(id, (atMs ?? clock()) / 1000, { publicMode }) : await buildAgentLog(theater, id, { now: clock(), publicMode });
+        if (!log) return sendJson(req, res, 404, { error: 'no agent with that id (it may have left the stage a while ago)' });
+        return sendJson(req, res, 200, log);
       }
       if (url.pathname === '/api/health') {
         const state = sample ? null : await getState(true, false);

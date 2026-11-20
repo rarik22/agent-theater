@@ -6,6 +6,7 @@
 // them. Static layers are cached and rebuilt only when the rows or the shape change. Every coordinate
 // is rounded to a whole pixel; every colour is a palette index. Pure.
 import { blinkAt, batchProgress, clipFor, mergeState, pulsesAt, rolePose } from './hd-anim.mjs';
+import { bubbleLine, bubbleStyle, drawBubbles, layoutBubbles, typedChars } from './hd-bubbles.mjs';
 import { CANCHOR, CH, CW, charFrame } from './hd-chars.mjs';
 import { drawController, drawDock } from './hd-controller.mjs';
 import { FONT, FONT_H, FONT_W, fontText, textWidth } from './hd-font.mjs';
@@ -389,8 +390,11 @@ function drawCoderAtDesk(f, e, P, t, calm) {
   dot(f, m.x + 21, m.y + 15, clip.pulse && !calm && Math.floor(t * 4) % 2 ? R.cyan[5] : R.cyan[3]);
 }
 
-/** Any agent: its pose for the role and action, the coder at its desk, bubbles over thinkers. */
-function drawAgent(f, e, t, calm) {
+/**
+ * Any agent: its pose for the role and action, the coder at its desk. `icons`: the small thinking and
+ * waiting signs over its head (only when speech bubbles are off; a bubble says it in words).
+ */
+function drawAgent(f, e, t, calm, icons = true) {
   const P = rolePose(e.role, e.kind, t, e.seed, { walking: e.walking, calm });
   const ax = Math.round(e.x);
   const ay = Math.round(e.y);
@@ -401,7 +405,7 @@ function drawAgent(f, e, t, calm) {
     blitChar(f, fr.body, ax, ay, e.facing);
     blitChar(f, fr.front, ax, ay, e.facing);
   }
-  if (P.bubble && !e.walking) drawBubble(f, e.place === 'dock' ? ax + 10 : ax, e.place === 'dock' ? ay + 12 : ay, P.bubble, t, calm);
+  if (icons && P.bubble && !e.walking) drawBubble(f, e.place === 'dock' ? ax + 10 : ax, e.place === 'dock' ? ay + 12 : ay, P.bubble, t, calm);
   return P;
 }
 
@@ -664,6 +668,8 @@ export function renderFrame(rd, world, opts = {}) {
   const f = rd.frame;
   f.px.set(rd.base.px);
   const agents = [...world.agents.values()];
+  // speech bubbles (opts.bubbles false: the small thinking and waiting signs instead)
+  const speech = opts.bubbles !== false;
   const laneAgents = agents.filter((e) => e.place === 'lane' && L.rowById.has(e.row));
   for (const e of agents) e.atDesk = e.place === 'lane' && L.rowById.has(e.row) && isDesk(L, L.rowById.get(e.row), e.station);
   // the belt always crawls; it runs fast while a parcel rides it
@@ -759,7 +765,7 @@ export function renderFrame(rd, world, opts = {}) {
     for (const e of here) {
       if (e.state === 'out') continue;
       if (!e.atDesk && !e.walking) drawConsoleLights(f, L, row, e.station, t, calm, e.kind);
-      drawAgent(f, e, t, calm);
+      drawAgent(f, e, t, calm, !speech);
     }
     for (const e of here) if (!e.walking && e.state !== 'out') drawLampLight(f, L, row, e.station, 'amber');
   }
@@ -767,7 +773,7 @@ export function renderFrame(rd, world, opts = {}) {
   const onStage = agents.filter((e) => e.state !== 'out');
   rd.readout = drawController(f, L, { rows: L.rows, hues: world.hues, agents: onStage.map((e) => ({ row: e.place === 'lane' ? e.row : null, station: e.place === 'lane' ? e.station : null, kind: e.kind, lane: e.lane, place: e.place })), lanes: world.lanes || [], project: world.project, batch: world.batchN, labels: world.project.labels, t, calm, events: t - world.beacon < 1 ? 1 : 0 });
   const docked = agents.filter((a) => a.place === 'dock' && a.state !== 'out').sort((a, b) => a.x - b.x);
-  for (const e of docked) drawAgent(f, e, t, calm);
+  for (const e of docked) drawAgent(f, e, t, calm, !speech);
   drawDockTags(f, L, docked);
   // machine yard: cables live while the merge holds test pods, the rack, the vault, the remote
   const held = world.podsHeldByMerge && world.podsHeldByMerge.length > 0;
@@ -811,7 +817,7 @@ export function renderFrame(rd, world, opts = {}) {
     if (P.pose === 'lever') lever = ([0, 2, 5, 8, 5, 2][P.k % 6] || 0) / 8;
   }
   drawPedestal(f, L, lever);
-  for (const e of mergers) drawAgent(f, e, t, calm);
+  for (const e of mergers) drawAgent(f, e, t, calm, !speech);
   // agents arriving or leaving, bounced jobs flying home, puffs
   for (const b of world.beams) drawBeam(f, b, t);
   for (const pl of world.planes) {
@@ -829,6 +835,31 @@ export function renderFrame(rd, world, opts = {}) {
     const c = p.colour === 'red' ? R.red[3] : R.steel[2];
     for (let a = 0; a < 8; a += 1) dot(f, p.x + Math.round(Math.cos(a * 0.785) * (3 + k * 2)), p.y + Math.round(Math.sin(a * 0.785) * (2 + k)), c);
   }
+  // the agent whose log is open stands on a lit mark
+  const picked = opts.selected ? world.agents.get(opts.selected) : null;
+  if (picked && picked.state !== 'out') {
+    hline(f, Math.round(picked.x) - 9, Math.round(picked.y) + 2, 20, R.amber[3]);
+    hline(f, Math.round(picked.x) - 6, Math.round(picked.y) + 3, 14, R.amber[2]);
+  }
+  // speech bubbles over everything: what each agent is doing right now, in one short line
+  if (speech) {
+    const nowMs = world.nowMs + (t - world.nowAt) * 1000;
+    const publicMode = world.scene ? world.scene.public !== false : true;
+    const speakers = agents
+      .filter((e) => e.state !== 'out' && !e.walking && e.say)
+      .map((e) => ({ id: e.id, x: e.x, y: e.y, place: e.place, text: bubbleLine({ say: e.say, publicMode, sinceMs: e.actSince, nowMs, background: e.background }), style: bubbleStyle(e.kind, e.background), selected: e.id === opts.selected }));
+    // the phone build letters at 2x (its labels are drawn twice as big too), so fewer words fit
+    const boxes = layoutBubbles(speakers, f.w, f.h, L.big ? { maxW: 168, minW: 30, scale: 2 } : { maxW: 104 });
+    const lettering = !calm && !opts.timelapse;
+    drawBubbles(f, boxes, {
+      t,
+      typed: (id) => {
+        const e = world.agents.get(id);
+        return lettering && e && Number.isFinite(e.sayT0) ? typedChars(t - e.sayT0) : Infinity;
+      },
+    });
+    rd.bubbles = boxes;
+  } else rd.bubbles = [];
   const tags = [];
   if (opts.sample) tags.push('SAMPLE');
   if (opts.timelapse) tags.push('TIME-LAPSE');

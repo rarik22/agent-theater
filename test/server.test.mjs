@@ -223,3 +223,28 @@ test('POST /api/events refuses what it should', async () => {
   assert.deepEqual(JSON.parse(nd.body), { accepted: 2, refused: [] });
   assert.equal((await get('/api/events', { method: 'PUT' })).status, 405);
 });
+
+test('GET /api/agent?id= opens an agent\'s log; a bad id is refused, an unknown one not found', async () => {
+  assert.equal((await get('/api/agent')).status, 400);
+  assert.equal((await get('/api/agent?id=../../x')).status, 400);
+  assert.equal((await get('/api/agent?id=nobody-here')).status, 404);
+  const state = JSON.parse((await get('/api/state')).body);
+  const id = state.agents.find((a) => !a.id.startsWith('ev-'))?.id;
+  assert.ok(id, 'the fixtures have an agent on stage');
+  const pub = await get(`/api/agent?id=${encodeURIComponent(id)}`);
+  assert.equal(pub.status, 200);
+  const log = JSON.parse(pub.body);
+  assert.equal(log.id, id);
+  assert.equal(log.public, true);
+  assert.equal(log.status, 'working');
+  assert.ok(log.entries.every((e) => typeof e.text === 'string' && !('detail' in e)));
+  const pri = JSON.parse((await get(`/api/agent?id=${encodeURIComponent(id)}&public=0`)).body);
+  assert.equal(pri.public, false);
+  assert.ok(pri.entries.some((e) => e.type === 'tool'));
+  // the sample answers for its own agents
+  const sample = JSON.parse((await get('/api/state?sample=1&at=1795003560')).body);
+  const sid = sample.agents[0].id;
+  const slog = JSON.parse((await get(`/api/agent?id=${sid}&sample=1&at=1795003560`)).body);
+  assert.equal(slog.sample, true);
+  assert.equal(slog.id, sid);
+});

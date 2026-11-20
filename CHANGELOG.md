@@ -15,6 +15,12 @@ The first public release.
 - Live accuracy: agents end with their result, their run's record, a stop, or 5 minutes of quiet with
   nothing in flight; an agent waiting on a background command shows what that command does.
 - Standalone subagents on the dock with a short tag.
+- Speech bubbles: every agent says, in one short line, what it is doing right now, lettered in with a
+  tiny pixel font; generic phrases in public mode, the agent's own words (redacted) in the private
+  view. White while working, dotted grey while thinking, amber while waiting, cyan for background work.
+- Click or tap an agent to open its log on the stage (`GET /api/agent`): steps only in public mode, the
+  redacted transcript (task, messages, tool calls, results) in the private view. Keyboard users reach
+  every agent through a list that appears on focus.
 - Counters of runs and agents; done, stopped and pushed events; test pods from background tests.
 - An event API (`POST /api/events` or a JSON Lines file) for other agent tools.
 - Presets for a team's own pipeline: job lanes, fixed stations, label rules, test-booth and lock

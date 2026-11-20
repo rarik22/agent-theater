@@ -10,6 +10,7 @@
 <p align="center">
   <a href="#get-it-running">Get it running</a> ·
   <a href="#meet-the-crew">Meet the crew</a> ·
+  <a href="#they-tell-you-what-theyre-doing">Speech bubbles</a> ·
   <a href="#a-walk-around-the-stage">A walk around the stage</a> ·
   <a href="#time-lapses-and-videos">Time-lapses</a> ·
   <a href="#bring-your-own-agents">Bring your own agents</a> ·
@@ -109,9 +110,41 @@ side never look like twins.
 </table>
 
 What their hands do is what they're actually doing. Typing means an agent is editing files. A hand on the
-chin means it hasn't called a tool for two minutes. An hourglass means it's waiting. A glowing test pod
-means tests are running in the background, and the agent who started them stays on stage until they
-finish.
+chin means it hasn't called a tool for two minutes. A glowing test pod means tests are running in the
+background, and the agent who started them stays on stage until they finish.
+
+## They tell you what they're doing
+
+<p align="center">
+  <img src="docs/images/bubbles.gif" alt="Two lanes close up: each agent's speech bubble letters in what it says it is doing" width="100%">
+</p>
+
+Every agent has a speech bubble with one short line about what it's doing right now. A new line is
+lettered in as you watch. The bubble's colour tells you the rest: white while it works, grey and dotted
+while it thinks, amber while it waits, cyan while something runs in the background for it.
+
+What the bubble says depends on who might be watching:
+
+- **Public mode** (the default) keeps to plain phrases, with how long it's been at it:
+  *Running tests · 3m*. Nothing from the transcript ever reaches the page, so it's safe to share.
+- **The private view** (`?public=0`, for your own screen) quotes the agent itself: the first sentence of
+  the last thing it said about its work, *Fixing the cart total rounding in ~/shop/src/cart.ts.*, with
+  secrets, e-mail addresses and home folders taken out.
+
+Busy stages stay readable: neighbours' bubbles keep out of each other's way, a long line is cut with an
+ellipsis, and the phone build letters them twice as big. `?bubbles=0` turns them off.
+
+### Click anyone
+
+<p align="center">
+  <img src="docs/images/log.png" alt="The stage with a coder's log open beside it: its task, what it said, each tool call and result" width="100%">
+</p>
+
+Click or tap an agent, or its bubble, and its log opens right there on the stage. In the private view
+that's the whole story: the task it was given, everything it said, each tool call with its command or
+file, and what came back, redacted the same way. In public mode it's a timeline of steps (when it
+started each thing, and for how long) and nothing else. The log follows along while it's open. Esc
+closes it, and on a phone it opens as a sheet along the bottom.
 
 ## A walk around the stage
 
@@ -330,6 +363,7 @@ one found wins: `--config <file>`, the `AGENT_THEATER_CONFIG` environment variab
 | `?big=1\|0` | Turns the phone build (big labels) on or off. |
 | `?fit=whole\|fill` | Whole-number scaling only, or fill the window. |
 | `?calm=1` | Half speed. Nothing ever freezes the stage. |
+| `?bubbles=0` | No speech bubbles (the small thinking and waiting signs come back). |
 | `?sample=1` | The labelled sample; add `&at=<unix seconds>` for a fixed moment. |
 | `?replay=<from>,<to>&duration=45` | A past window as a looping time-lapse; `&tz=` sets the clock's time zone. |
 | `?timelapse=8` | The last eight hours, once. |

@@ -1,7 +1,7 @@
 // The README's pictures, drawn in Node from the labelled sample with the same modules the page uses, and
 // written as lossless GIFs (tools/gif.mjs) and PNGs. No browser needed. Every picture shows sample data.
 //
-//   node tools/readme-media.mjs [--out docs/images] [--only banner,stage,phone,cast,handoff,yard,timelapse,tour]
+//   node tools/readme-media.mjs [--out docs/images] [--only banner,stage,phone,cast,handoff,yard,timelapse,tour,bubbles]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { sampleReplay, sampleStateAt } from '../lib/sample.mjs';
@@ -26,7 +26,7 @@ const opt = (name, d) => {
   return i >= 0 ? args[i + 1] : d;
 };
 const OUT = resolve(ROOT, opt('out', 'docs/images'));
-const ONLY = new Set(String(opt('only', 'banner,stage,phone,cast,handoff,yard,timelapse,tour')).split(','));
+const ONLY = new Set(String(opt('only', 'banner,stage,phone,cast,handoff,yard,timelapse,tour,bubbles')).split(','));
 
 /** The hundredths of a second frame k of a film at `fps` lasts, so the total stays exact. */
 const delayOf = (k, fps) => Math.round(((k + 1) * 100) / fps) - Math.round((k * 100) / fps);
@@ -35,12 +35,12 @@ const delayOf = (k, fps) => Math.round(((k + 1) * 100) / fps) - Math.round((k * 
  * Film the sample: the world is stepped at 60 fps and given the sample's state every 2 s, as the page
  * does; after `warm` seconds, every frame at `fps` is drawn, optionally painted over, cut and scaled.
  */
-function film({ g0, seconds, fps = 15, warm = 4, aspect = '16:9', big = false, crop = null, scale = 1, paint = null, onWarm = null, only = null }) {
+function film({ g0, seconds, fps = 15, warm = 4, aspect = '16:9', big = false, crop = null, scale = 1, paint = null, onWarm = null, only = null, publicMode = true, bubbles = true }) {
   const world = createWorld({ aspect, big });
   const rd = createRenderer();
   // `only` keeps the agents it accepts (a close-up of one character, with nobody beside it)
   const stateAt = (g) => {
-    const s = sampleStateAt(CFG, g);
+    const s = sampleStateAt(CFG, g, { publicMode });
     return only ? { ...s, agents: s.agents.filter(only) } : s;
   };
   applyState(world, stateAt(g0), { first: true });
@@ -60,7 +60,7 @@ function film({ g0, seconds, fps = 15, warm = 4, aspect = '16:9', big = false, c
     }
     if (i === warmSteps - 1 && onWarm) box = onWarm(world) || box;
     if (i < warmSteps || (i - warmSteps) % per !== 0) continue;
-    const f = renderFrame(rd, world, { sample: true });
+    const f = renderFrame(rd, world, { sample: true, bubbles });
     if (paint) paint(f, world);
     let px = f.px;
     let w = f.w;
@@ -183,6 +183,8 @@ if (ONLY.has('cast')) {
       warm: 1,
       scale: 3,
       only: (a) => a.id === first.id,
+      // a portrait: no bubble (it would not fit the frame); the small thinking and waiting signs instead
+      bubbles: false,
       onWarm: (w) => {
         const a = w.agents.get(first.id);
         const dx = a.facing === -1 ? -16 : 10;
@@ -190,6 +192,11 @@ if (ONLY.has('cast')) {
       },
     }));
   }
+}
+
+if (ONLY.has('bubbles')) {
+  // two lanes, close up, in the private view: the agents' own words, lettered in as they change
+  save('bubbles.gif', film({ g0: BUSY + 6, seconds: 14, fps: 15, scale: 2, publicMode: false, crop: { x: 44, y: 72, w: 470, h: 148 } }));
 }
 
 if (ONLY.has('timelapse')) {

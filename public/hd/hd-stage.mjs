@@ -9,7 +9,11 @@
 // speed, which never freezes it. ?replay=<from>,<to>&duration=45 plays a past window as a time-lapse
 // with a small readout of the replayed clock. Videos are made by tools/render-video.mjs, which loads
 // hd-recorder.mjs into the page through the DevTools protocol; the page itself has no export UI.
+// Every agent has a speech bubble saying what it is doing (?bubbles=0 hides them); a click or tap on an
+// agent (or its bubble) opens its log on the stage, from /api/agent (hd-log.mjs).
 // Codes strictly to the /api/state schema and never invents data.
+import { agentAt } from './hd-bubbles.mjs';
+import { createLogPanel } from './hd-log.mjs';
 import { describeScene } from './hd-scene.mjs';
 import { toRGBA } from './hd-gfx.mjs';
 import { ASPECTS, SCALE, aspectForWindow, fitScale, normAspect } from './hd-layout.mjs';
@@ -28,6 +32,7 @@ const POLL = params.get('feed') === 'poll' || (params.get('feed') !== 'sse' && /
 // Calm is an explicit choice only (?calm=1): the system's reduced-motion setting does not freeze the stage.
 const SOFT = params.get('calm') === '1';
 const TZ = params.get('tz') || undefined;
+const BUBBLES = params.get('bubbles') !== '0';
 const parseAspect = (v) => {
   const a = String(v || '').replace('x', ':');
   return ASPECTS[a] ? a : null;
@@ -294,7 +299,69 @@ function noteScene(first) {
     srEl.textContent = said;
     lastAnnounce = now;
   }
+  updateAgentList();
   if (PROBE) writeProbe();
+}
+
+// ---------------------------------------------------------------- an agent's log
+async function fetchLog(id) {
+  const r = await fetch(apiUrl('/api/agent', { id }), { cache: 'no-store' });
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}));
+    throw new Error(body.error || `The server answered HTTP ${r.status}.`);
+  }
+  return r.json();
+}
+const logPanel = createLogPanel({ root: $('log'), fetchLog, tz: TZ });
+
+/** A pointer's place on the stage, in the frame's own pixels (null before the canvas is sized). */
+function stagePoint(ev) {
+  const { w } = ASPECTS[world.aspect];
+  if (!fitState.devW) return null;
+  const k = w / fitState.devW;
+  return { x: (ev.clientX * fitState.dpr - fitState.left - fitState.ox) * k, y: (ev.clientY * fitState.dpr - fitState.top - fitState.oy) * k };
+}
+const hitAgent = (ev) => {
+  const p = stagePoint(ev);
+  return p ? agentAt(p.x, p.y, [...world.agents.values()], rd.bubbles || []) : null;
+};
+canvas.addEventListener('click', (ev) => {
+  const id = hitAgent(ev);
+  if (id) logPanel.open(id);
+  else logPanel.close();
+});
+canvas.addEventListener('pointermove', (ev) => {
+  if (ev.pointerType === 'mouse') canvas.style.cursor = hitAgent(ev) ? 'pointer' : '';
+});
+
+// every agent as a button (shown when focused), so the keyboard reaches each log too
+const ROLE_WORD = { setup: 'Setup', coder: 'Coder', reviewer: 'Reviewer', fixer: 'Fixer', preparer: 'Preparer', merger: 'Merger', verifier: 'Verifier', helper: 'Helper' };
+const listEl = $('agents');
+const listButtons = new Map();
+function updateAgentList() {
+  const sc = world.scene;
+  if (!sc || !listEl) return;
+  const keep = new Set();
+  for (const a of sc.agents) {
+    keep.add(a.id);
+    let b = listButtons.get(a.id);
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.addEventListener('click', () => logPanel.open(a.id, { opener: b }));
+      listButtons.set(a.id, b);
+      listEl.appendChild(b);
+    }
+    const where = a.lane ? ` on ${a.lane}` : a.place === 'merge' ? ' at the machine' : ' on the dock';
+    const label = `${ROLE_WORD[a.role] || 'Agent'}${a.tag ? ` ${a.tag}` : ''}${where}: ${a.say || a.kind}`;
+    if (b.textContent !== label) b.textContent = label;
+  }
+  for (const [id, b] of listButtons) {
+    if (keep.has(id)) continue;
+    if (document.activeElement === b) listEl.querySelector('button:not(:focus)')?.focus();
+    b.remove();
+    listButtons.delete(id);
+  }
 }
 
 function writeProbe() {
@@ -332,6 +399,9 @@ const stage = { recording: false, cards: null };
 function render(now, toOutput = stage.recording) {
   const clockMs = replayClock(now);
   const f = renderFrame(rd, world, {
+    bubbles: BUBBLES,
+    // a recording never shows the open log's mark
+    selected: toOutput ? null : logPanel.id,
     sample: Boolean(world.scene?.sample) || SAMPLE,
     timelapse: replay.active,
     offline: offline(),
@@ -456,4 +526,4 @@ Object.assign(stage, { out, world, replay, feed, render, fetchReplay, startRepla
   setAspect(world, normAspect(a));
   setupCanvas();
 } });
-window.__theater = { world, replay, feed, render, probe, motionProbe, stage };
+window.__theater = { world, replay, feed, render, probe, motionProbe, stage, logPanel };

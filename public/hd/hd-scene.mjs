@@ -89,6 +89,12 @@ export function pipelineLanes(state) {
   return out;
 }
 
+/** Words for a speech bubble: a string without control characters, one line, at most 160 characters. */
+export function cleanSay(v) {
+  if (typeof v !== 'string') return '';
+  return v.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+}
+
 /** One agent from the state, validated: unknown roles become helpers and unknown actions thinking. */
 export function normalizeAgent(a) {
   if (!a || typeof a !== 'object') return null;
@@ -97,10 +103,15 @@ export function normalizeAgent(a) {
   const role = ROLE_SET.has(a.role) ? a.role : 'helper';
   const kind = KIND_SET.has(a.action?.kind) ? a.action.kind : 'think';
   const since = Date.parse(a.since);
+  const actSince = Date.parse(a.action?.since);
   return {
     id,
     role,
     kind,
+    // the bubble's words: the state's `say` (a generic phrase in public mode), else the action's text
+    say: cleanSay(a.say ?? a.action?.text),
+    actSince: Number.isFinite(actSince) ? actSince : null,
+    background: a.action?.background === true,
     job: safeKey(a.job),
     lane: isLaneId(a.lane) ? a.lane : null,
     station: whole(a.station),
@@ -263,6 +274,7 @@ export function mapState(state, maxRows = 8) {
     ...podScene(state),
     events: stageEvents(state),
     sample: state?.sample === true,
+    public: state?.public !== false,
     replay: state?.mode === 'replay',
     agentsKnown: Array.isArray(state?.agents),
   };

@@ -25,7 +25,7 @@ curl -s http://127.0.0.1:8790/api/events -H 'content-type: application/json' -d 
 | `{ "lane": "checkout", "stations": ["Plan", "Build", "Test"] }` | A lane and its stations (1 to 6). `tag` sets its public name (default: the lane key). |
 | `{ "agent": "bot-1", "lane": "checkout", "station": "Build", "action": "edit" }` | An agent at work. `station` is a station name (added to the lane when new) or an index. |
 | `{ "agent": "bot-1", "role": "verifier" }` | Its character: `setup`, `coder`, `reviewer`, `fixer`, `preparer`, `merger`, `verifier` or `helper` (default: from the station's name). |
-| `{ "agent": "bot-1", "text": "editing cart.ts" }` | A description, shown only in the private view (`?public=0`), redacted. |
+| `{ "agent": "bot-1", "text": "editing cart.ts" }` | What it says it is doing: its speech bubble and its log in the private view (`?public=0`), redacted. Public mode shows the action's phrase instead. |
 | `{ "agent": "bot-1", "status": "done" }` | It finished (`done`) or stopped (`stopped`, `failed`) and leaves the stage. |
 | `{ "lane": "checkout", "status": "done" }` | The lane's work is done (`done`) or stopped; it stays two minutes, then leaves. |
 | `{ "progress": { "done": 3, "total": 10 } }` | The controller's main counter. |
