@@ -5,7 +5,8 @@ parse: what it cannot read it leaves out, and `/api/health` reports the source a
 
 ## Claude Code
 
-Claude Code keeps each session under `~/.claude/projects/<project>/`. The adapter reads these shapes
+Claude Code keeps each session under `projects/<project>/` in its folder: `$CLAUDE_CONFIG_DIR` when
+that is set, else `~/.claude` (`sources.claude` names another). The adapter reads these shapes
 (as of Claude Code 2.1; fields not listed are ignored, so additions do not break it):
 
 | Path (under the session folder `<project>/<session>/`) | Used for |

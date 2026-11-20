@@ -46,17 +46,17 @@ repository exists.
    In a Claude Code session the README's line works too:
    `/plugin install agent-theater --marketplace tarqmamdouh/agent-theater`.
 
-## 2. npm
+   The plugin carries the app, so it works from GitHub alone; npm is not needed for it.
 
-The package name `agent-theater` was free on 2026-11-20. The plugin runs
-`npx -y agent-theater@<its version>` when no server is running and the plugin folder has no copy of the
-app, so publish to npm before people install the plugin.
+## 2. npm (optional, for `npx agent-theater`)
+
+The package name `agent-theater` was free on 2026-11-20.
 
 ```sh
 cd E:/agent-theater-release
 npm view agent-theater name        # "404 Not Found" means the name is still free
 npm login
-npm publish --dry-run              # lists the files; no tests, plugin, local/ or qa-local/
+npm publish --dry-run              # lists the files; no tests, plugin hooks, local/ or qa-local/
 npm publish
 npx -y agent-theater@0.1.0 --version   # prints 0.1.0
 ```
@@ -67,6 +67,7 @@ If your npm account uses two-factor authentication, `npm publish` asks for a one
 ## Later releases
 
 1. Update `CHANGELOG.md`.
-2. Bump the same version in `package.json` and `plugin/.claude-plugin/plugin.json`.
-3. `node --test test/`, `claude plugin validate --strict plugin`, `claude plugin test plugin`.
+2. Bump the same version in `package.json` and `.claude-plugin/plugin.json`. Plugin users get the
+   new version through `claude plugin update agent-theater` once it is pushed.
+3. `node --test test/`, `claude plugin validate --strict .`, `claude plugin test .`.
 4. Commit, tag `v<version>`, `git push && git push --tags`, then `npm publish`.

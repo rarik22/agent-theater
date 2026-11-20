@@ -10,7 +10,8 @@ The first public release.
   4:5 and 9:16, phone builds with big labels, crisp device-pixel scaling.
 - Lanes from Claude Code workflows: one lane per workflow run, its stations the workflow's own phases,
   agents at the station of their phase, walking from station to station as the run moves on.
-  Sessions are discovered under `~/.claude/projects`.
+  Sessions are discovered under `projects/` in Claude Code's folder (`$CLAUDE_CONFIG_DIR`, else
+  `~/.claude`).
 - Live accuracy: agents end with their result, their run's record, a stop, or 5 minutes of quiet with
   nothing in flight; an agent waiting on a background command shows what that command does.
 - Standalone subagents on the dock with a short tag.
@@ -21,5 +22,6 @@ The first public release.
 - Time-lapses of any past window (`/api/replay`) and a video exporter (`tools/render-video.mjs`) with
   title and end cards and multi-window cuts.
 - Public mode by default: generic phrases only, no commands, paths, names or secrets.
-- A companion Claude Code plugin: it starts the server, adds `/theater`, a status-line entry and a
-  pane of lanes and agents.
+- A Claude Code plugin that carries the whole app (the repository root is the plugin and its
+  marketplace): it starts the server, adds `/theater`, a status-line entry and a pane of lanes and
+  agents, and needs nothing from npm.

@@ -25,7 +25,8 @@ claude plugin install agent-theater --marketplace tarqmamdouh/agent-theater
 In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins,
 Add marketplace with `tarqmamdouh/agent-theater`, then Add plugin.
 
-Needs Node.js 24 or newer, with `npx` (it comes with npm), on the PATH.
+Needs Node.js 24 or newer on the PATH. The repository root is the plugin, so an install carries the
+whole app (about 1.2 MB) and nothing comes from npm.
 
 ## What it adds
 
@@ -49,17 +50,16 @@ button.
 
 1. **A server already running.** If `GET http://127.0.0.1:<port>/api/health` answers `{ "ok": true }`,
    the plugin uses that server and never stops it.
-2. **A copy in the plugin's own folder.** If the plugin's folder holds `server.mjs`, the plugin runs
-   `node <plugin folder>/server.mjs --port <port>`.
-3. **npm.** Otherwise it runs `npx -y agent-theater@<version> --port <port>`, `<version>` being the
-   plugin's own version from `plugin.json` (through `cmd.exe` on Windows, where `npx` is a script).
+2. **The app it carries.** The marketplace lists the plugin with `"source": "./"`, so an install
+   copies the whole repository into Claude Code's plugin cache
+   (`<Claude Code's folder>/plugins/cache/agent-theater/agent-theater/<version>/`), `server.mjs`
+   included. The plugin runs `node <plugin folder>/server.mjs --port <port>`.
+3. **npm, as a fallback.** Only for a copy of the plugin without the app: `npx -y
+   agent-theater@<version> --port <port>`, `<version>` being the plugin's own version from
+   `plugin.json` (through `cmd.exe` on Windows, where `npx` is a script).
 
-Why step 3: the marketplace lists the plugin with `"source": "./plugin"`. When someone installs it
-from the GitHub marketplace, Claude Code copies only that folder into its plugin cache
-(`~/.claude/plugins/cache/agent-theater/agent-theater/<version>/`) and loads that copy. Files outside
-the plugin folder, such as `../server.mjs`, are not copied, so the plugin never refers to them and
-runs the published npm package instead. Step 2 covers a layout that does carry the app (the
-repository root as the plugin's source, or a copy of the app placed in the plugin folder).
+The server the plugin starts inherits Claude Code's environment, so it reads the same folder Claude
+Code keeps its sessions in (`$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`).
 
 The server only listens on 127.0.0.1. A server the plugin started is stopped when the session ends
 (not on `/clear`), with `/theater stop`, or when the plugin reloads. When another Claude Code
@@ -83,21 +83,23 @@ The plugin reads `GET /api/state?public=1` every 4 seconds from the server on 12
 while the server starts). In public mode the server already strips commands, paths and names; the
 plugin shows only the fields it receives (role, the job's tag or id, the station, the action's text,
 lane progress) and adds nothing of its own: no working directory, no user names. The plugin itself
-talks to 127.0.0.1 only; `npx` contacts the npm registry when it fetches the server.
+talks to 127.0.0.1 only.
 
 ## Develop
 
+From the repository root, which is the plugin's folder:
+
 ```sh
-claude plugin validate plugin          # manifest and hooks module
-claude plugin test plugin              # tests/*.test.tsx against the engine's test kit
-claude --plugin-dir plugin             # a session with the plugin loaded from this folder
+claude plugin validate --strict .      # marketplace, manifest and hooks module
+claude plugin test .                   # test/plugin/*.test.tsx against the engine's test kit
+claude --plugin-dir .                  # a session with the plugin loaded from this folder
 ```
 
-Before `agent-theater` is on npm, start the server yourself (`node server.mjs`) and the plugin uses
-it. Release the npm package and the plugin together: keep `version` in `plugin/.claude-plugin/plugin.json`
-equal to the version in `package.json`, and publish to npm before users get the new plugin version,
-since the plugin runs `agent-theater@<its own version>`.
+The hooks module is `hooks/register.tsx` (with `hooks/launch.ts` and `hooks/summary.ts`), its state
+contract `types/index.d.ts`, the manifest `.claude-plugin/plugin.json`. Keep `version` there equal to
+the version in `package.json`. The npm command lives in `cli/`, not `bin/`: a plugin's `bin/` folder
+joins the PATH of every Claude Code session.
 
 ## License
 
-PolyForm Internal Use License 1.0.0. See `LICENSE.md` at the repository root.
+PolyForm Internal Use License 1.0.0. See [LICENSE.md](../LICENSE.md).

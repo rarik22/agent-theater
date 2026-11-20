@@ -20,7 +20,7 @@ under these terms:
 
 - `node --test test/` passes. Tests use synthetic fixtures only: never add real transcripts, journals,
   paths, names or secrets.
-- For plugin changes: `claude plugin validate --strict plugin` and `claude plugin test plugin` pass.
+- For plugin changes: `claude plugin validate --strict .` and `claude plugin test .` pass.
 - Keep the server read-only on its sources, bound to 127.0.0.1, and free of npm dependencies.
 - Keep public mode safe: nothing from a command, path, prompt or description may reach the public
   state.

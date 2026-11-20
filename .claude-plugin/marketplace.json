@@ -5,7 +5,7 @@
   "plugins": [
     {
       "name": "agent-theater",
-      "source": "./plugin",
+      "source": "./",
       "description": "A live pixel-art stage of your AI agents at work: a status line entry, /theater, and a compact pane of agents and lanes beside the chat."
     }
   ]

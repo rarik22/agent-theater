@@ -24,7 +24,7 @@
   "author": "tarqmamdouh (https://github.com/tarqmamdouh)",
   "type": "module",
   "bin": {
-    "agent-theater": "bin/agent-theater.mjs"
+    "agent-theater": "cli/agent-theater.mjs"
   },
   "main": "server.mjs",
   "exports": {
@@ -32,7 +32,7 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "bin/",
+    "cli/",
     "lib/",
     "public/",
     "presets/",
@@ -50,7 +50,7 @@
     "start": "node server.mjs",
     "summary": "node server.mjs --once",
     "test": "node --test test/",
-    "test:plugin": "claude plugin test plugin",
-    "validate:plugin": "claude plugin validate --strict plugin"
+    "test:plugin": "claude plugin test .",
+    "validate:plugin": "claude plugin validate --strict ."
   }
 }

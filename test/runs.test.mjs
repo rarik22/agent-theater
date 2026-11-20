@@ -4,6 +4,9 @@
 // replay in which the run's agents hand over from station to station.
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
+import { homedir, tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { normalizeConfig } from '../lib/config.mjs';
 import { replayWindow, buildReplay } from '../lib/replay.mjs';
 import { compileRules, stationKindOf, stationTag } from '../lib/rules.mjs';
 import { LaunchIndex, discoverSessions, parseWorkflowMeta, scanRuns } from '../lib/sources/claude.mjs';
@@ -27,6 +30,16 @@ test('sessions are discovered under ~/.claude/projects, active ones only, filter
   assert.equal(discoverSessions(fx.cfg, { sinceMs: 0 }).length, 2);
   const only = { ...fx.cfg, sources: { ...fx.cfg.sources, projects: ['*idle*'] } };
   assert.deepEqual(discoverSessions(only, { sinceMs: 0 }).map((s) => s.project), ['-home-dev-idle']);
+});
+
+test('Claude Code\'s folder: sources.claude, else CLAUDE_CONFIG_DIR, else ~/.claude', () => {
+  const env = { CLAUDE_CONFIG_DIR: join(tmpdir(), 'cc-home') };
+  assert.equal(normalizeConfig({}, tmpdir(), env).sources.claude, env.CLAUDE_CONFIG_DIR);
+  assert.equal(normalizeConfig({}, tmpdir(), {}).sources.claude, join(homedir(), '.claude'));
+  assert.equal(normalizeConfig({ sources: { claude: '/srv/cc' } }, tmpdir(), env).sources.claude, resolve('/srv/cc'));
+  assert.equal(normalizeConfig({ sources: { claude: false } }, tmpdir(), env).sources.claude, null);
+  // one named workflows folder still means no discovery
+  assert.equal(normalizeConfig({ sources: { workflows: '/srv/w/workflows' } }, tmpdir(), env).sources.claude, null);
 });
 
 test('a run\'s phases come from its record, its launch, its persisted script, or its journal', () => {

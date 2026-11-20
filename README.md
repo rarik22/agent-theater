@@ -40,18 +40,21 @@ agent-theater [--port N] [--config file] [--once] [--version]
 `--once` prints a one-shot summary of the live state (lanes, agents, sources) and exits; use it to
 check what the theater can read.
 
-### The Claude Code plugin
+### As a Claude Code plugin
 
-The repository is also a plugin marketplace. In a Claude Code session:
+The repository is also a Claude Code plugin and its marketplace, and the plugin carries the whole
+app: it needs Node.js 24 or newer on the PATH and nothing from npm. At the prompt of a terminal
+session:
 
 ```text
 /plugin install agent-theater --marketplace tarqmamdouh/agent-theater
 ```
 
-The plugin starts the theater server (or reuses one that is running), adds `/theater` to open the
-live view, puts `4 agents working · 18/40 runs` on the status line, and opens a compact pane beside
-the chat with each lane's progress and its agents. The animated stage itself runs in the browser. See
-[plugin/README.md](plugin/README.md) for its options.
+Answer `y` to add the marketplace, then pick a scope. The plugin starts the theater server when a
+session starts (or reuses one that is running) and stops it when the session ends, adds `/theater`
+to open the live view, puts `4 agents working · 18/40 runs` on the status line, and opens a compact
+pane beside the chat with each lane's progress and its agents. The animated stage itself runs in the
+browser. See [docs/PLUGIN.md](docs/PLUGIN.md) for its options.
 
 ## What the stage shows
 
@@ -102,7 +105,8 @@ lanes / queue / locks / progress files, git log     ── optional runner sourc
               public/  (vanilla JS, Canvas 2D, 960x540 drawn at x2)
 ```
 
-- The Claude Code adapter finds the sessions under `~/.claude/projects/*/` that were active in the
+- The Claude Code adapter finds the sessions under `projects/*/` in Claude Code's folder
+  (`$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`) that were active in the
   last day. For each workflow run it reads the journal (which agent started in which phase, results,
   failures), the run record once the run ends (workflow name, phases, completed or stopped), and for
   a run still going, the script the session launched it with. Transcripts are read incrementally; a
@@ -120,8 +124,8 @@ API: [docs/API.md](docs/API.md). Event API: [docs/EVENTS.md](docs/EVENTS.md).
 
 ## Configuration
 
-Without a config file the theater discovers Claude Code sessions under `~/.claude` and needs nothing
-else. A config file is JSON; the first one found is used: `--config <file>`, the
+Without a config file the theater discovers Claude Code sessions in Claude Code's folder
+(`$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`) and needs nothing else. A config file is JSON; the first one found is used: `--config <file>`, the
 `AGENT_THEATER_CONFIG` environment variable, `./agent-theater.config.json`, then `config.json` next to
 the app.
 
@@ -137,7 +141,7 @@ the app.
 | --- | --- | --- |
 | `port` | 8790 | HTTP port. The host is always 127.0.0.1. |
 | `preset` | none | A preset file merged under this config (paths in it are relative to it). |
-| `sources.claude` | `~/.claude` | Claude Code's folder; `false` turns discovery off. |
+| `sources.claude` | `$CLAUDE_CONFIG_DIR`, else `~/.claude` | Claude Code's folder; `false` turns discovery off. |
 | `sources.projects` | all | Only these project folders (names as under `~/.claude/projects`, `*` wildcards). |
 | `sources.workflows` | none | One session's `subagents/workflows` folder instead of discovery. |
 | `sources.subagents` | from `workflows` | That session's standalone subagents; `false` leaves them out. |
@@ -198,15 +202,15 @@ node tools/render-video.mjs --date 2026-11-19 --segments "10:20-10:32,12:05-12:2
   Commands, file paths, prompts, agent descriptions, project folder names, session ids and free text
   never reach it. `?public=0` shows tool descriptions, redacted (e-mail addresses, tokens and home
   folders removed), for your own screen.
-- Everything stays on your machine. The plugin talks only to 127.0.0.1 (and `npx` to the npm registry
-  when it fetches the server).
+- Everything stays on your machine. The plugin talks only to 127.0.0.1 and runs the app it carries.
 
 ## Development
 
 ```sh
 node --test test/                       # server, adapters, stage modules (synthetic fixtures only)
-claude plugin validate --strict plugin  # the plugin's manifest and hooks
-claude plugin test plugin               # the plugin's tests
+claude plugin validate --strict .       # the marketplace, the plugin's manifest and hooks
+claude plugin test .                    # the plugin's tests (test/plugin/)
+claude --plugin-dir .                   # a session with the plugin loaded from this folder
 node tools/hd-frame.mjs --sample full --sim 6 --aspect 9:16 --out x.png   # one frame, in Node
 node tools/hd-qa-full.mjs round1        # browser QA: screenshots, probe vs state, a recorded video
 node tools/mobile-check.mjs             # phones and tablets through Chrome device emulation

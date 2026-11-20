@@ -1,8 +1,9 @@
 // Agent Theater for Claude Code: starts (or reuses) the local theater server, keeps a status
 // line entry, adds /theater, and draws a compact pane of the agents and their lanes.
 //
-// The server: a server.mjs in the plugin's own folder when there is one, else
-// `npx -y agent-theater@<this plugin's version>`. A server that already answers /api/health
+// The server: the app in the plugin's own folder (the repository root is the plugin, so an
+// install carries server.mjs), else `npx -y agent-theater@<this plugin's version>` for a layout
+// without it. A server that already answers /api/health
 // on the port is reused and never stopped; only a server this session started is stopped.
 
 import { atom, read, update } from 'claude-code'

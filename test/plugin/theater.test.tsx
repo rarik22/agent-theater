@@ -1,8 +1,8 @@
 import type { On, SessionMachine } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 
-import { exitReason, launchPlan, listenerPid, settingsOf } from '../hooks/launch'
-import { laneFigure, statusLine, summarize } from '../hooks/summary'
+import { exitReason, launchPlan, listenerPid, settingsOf } from '../../hooks/launch'
+import { laneFigure, statusLine, summarize } from '../../hooks/summary'
 
 // The new state shape: pipeline lanes, labels, lane/station on agents. Some fields are
 // missing on purpose.
