@@ -48,7 +48,7 @@ Without the key, lanes are workflow runs.
 | `rules.laneId` | What a lane id looks like (default: up to six letters, digits or dashes). |
 | `rules.booth` | `{ "match": "\\bbooth\\.sh\\s+(run|exclusive)\\s+(\\S+)\\s*(.*)$", "exclusive": "exclusive" }`: a command that queues for a test pod. Groups: 1 the mode (`exclusive` holds every pod), 2 the owner, 3 the command it runs. |
 | `rules.lock` | `{ "match": "\\bhold\\.sh\\s+acquire\\s+(\\S+)(?:\\s+(\\S+))?" }`: a command that waits for a lock. Groups: 1 the lock, 2 the owner. |
-| `rules.locks` | Folder names in the locks source: `{ "merge", "exclusive", "slotPrefix" }`. |
+| `rules.locks` | Folder names in the locks source: `{ "merge", "exclusive", "slotPrefix", "release" }`. `release` is the prefix of release-train locks (`release-`, so `release-0.3.1`); `""` turns them off. |
 | `rules.liveChecks` | Regexes of commands that are long live checks of the product (default: e2e, playwright, cypress). |
 | `rules.measures` | Regexes of commands that measure test times. |
 | `rules.standaloneTags` | `[["\\brunner\\b", "RUNNER"], ["\\bplan-(\\d+)\\b", "PLAN-$1"]]`: tags for standalone subagents' descriptions, before the built-in words. |

@@ -1,6 +1,6 @@
 {
   "name": "agent-theater",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A live pixel-art stage of AI agents at work, with a video exporter. Works with Claude Code workflows and subagents, and with any agent tool through a small event API.",
   "keywords": [
     "agents",

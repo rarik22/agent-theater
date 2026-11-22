@@ -330,6 +330,8 @@ export function drawMergeDynamic(f, L, ms) {
     const ly = i * 4;
     let on = false;
     if (state === 'fail' && i === 0) on = calm || Math.floor(t * 6) % 2 === 0;
+    // release trains: the release is being fixed (or has an open failure): the red lamp holds steady
+    if (state === 'fixing' && i === 0) on = true;
     if (state === 'working' && i === 1) on = calm || Math.floor(t * 2) % 2 === 0;
     const standby = state === 'idle' && i === 1 && Math.sin(t * 1.2) > 0.4;
     if (state === 'pass' && i === 2) on = true;
@@ -344,11 +346,13 @@ export function drawMergeDynamic(f, L, ms) {
   }
   box(136, -2, 9, 2, R.gun[3]);
   box(136, -2, 9, 1, R.steel[1]);
-  // progress strip: never complete while working, the last segment lights when the merge lands
-  const seg = state === 'pass' || state === 'fail' ? 10 : working ? Math.min(9, Math.max(1, Math.round(progress * 10))) : 0;
+  // progress strip: never complete while working, the last segment lights when the merge lands; with
+  // release trains it shows how full the release is (dim) while the machine waits
+  const fill = Number.isFinite(ms.fill) ? Math.round(Math.max(0, Math.min(1, ms.fill)) * 10) : null;
+  const seg = state === 'pass' || state === 'fail' ? 10 : working ? Math.min(9, Math.max(1, Math.round(progress * 10))) : fill ?? 0;
   for (let i = 0; i < 10; i += 1) {
     const lit = i < seg;
-    const col = state === 'pass' ? R.mint[3] : state === 'fail' ? R.red[3] : R.cyan[3];
+    const col = state === 'pass' ? R.mint[3] : state === 'fail' ? R.red[3] : !working && fill !== null ? (state === 'fixing' ? R.red[2] : R.cyan[2]) : R.cyan[3];
     const sx = L.merge.flip ? 58 + (9 - i) * 4 : 58 + i * 4;
     box(sx, 31, 3, 3, lit ? col : R.glass[2]);
     if (lit) pt(sx, 31, state === 'pass' ? R.mint[4] : state === 'fail' ? R.red[4] : R.cyan[4]);
@@ -373,7 +377,7 @@ export function drawMergeDynamic(f, L, ms) {
     box(dir > 0 ? x : x + 2, 52, 1, 20, R.steel[1]);
     box(dir > 0 ? x + 3 : x - 2, 58, 2, 8, R.gun[2]);
   }
-  const wl = state === 'pass' ? 'mint' : state === 'fail' ? 'red' : working ? 'cyan' : null;
+  const wl = state === 'pass' ? 'mint' : state === 'fail' || state === 'fixing' ? 'red' : working ? 'cyan' : null;
   const win = windowBox(L);
   if (wl) {
     lightRect(f, win.x, win.y, win.w, win.h, wl, 1);
@@ -383,9 +387,10 @@ export function drawMergeDynamic(f, L, ms) {
     const flick = calm ? 1 : 1 + (Math.floor(t * 3) % 2);
     for (const vx of [20, 104]) for (let y = 91; y < 99; y += 3) for (let x = vx; x < vx + 32; x += 1) pt(x, y, flick > 1 && (x + y) % 5 === 0 ? R.amber[2] : R.amber[1]);
   }
-  // batch counter: how many parcels the running batch holds now
-  const n = ms.count || 0;
-  const label = n > 0 ? String(Math.min(99, n)) : '--';
+  // batch counter: how many parcels the running batch holds now (release trains: counted/capacity)
+  const counter = typeof ms.counter === 'string' && /^\d{1,2}\/\d{1,2}$/.test(ms.counter) ? ms.counter : null;
+  const n = counter ? Number(counter.split('/')[0]) : ms.count || 0;
+  const label = counter || (n > 0 ? String(Math.min(99, n)) : '--');
   const lw = 12 + label.length * 6;
   const lx = X(78 - Math.floor(lw / 2), lw);
   const ly = oy + 89;

@@ -55,12 +55,45 @@ controller.
 too). Ready entries ride the queue column; a running batch's entries sit in the merge machine.
 Bounce reasons appear only in the private view.
 
+**Release trains (schema 2).** A runner that merges in releases instead of batches writes:
+
+```json
+{ "schema": 2,
+  "entries": [{ "slug": "s05-task-02", "id": "S05-TASK-02", "phase": "S05", "kind": "core",
+                "status": "integrated", "release": "0.3.1", "integratedAt": "ISO", "readyAt": "ISO",
+                "mergedAt": "ISO", "history": ["ISO added at <sha>", "ISO integrated into release 0.3.1 at <sha>"] }],
+  "releases": [{ "version": "0.3.1", "status": "fixing", "capacity": 10, "gate": false,
+                 "openedAt": "ISO", "closedAt": "ISO", "passedAt": "ISO", "tag": "v0.3.1",
+                 "entries": [{ "type": "entry"|"release-fix", "slug": "…", "id": "…", "counted": true, "at": "ISO" }],
+                 "runs": [{ "n": 1, "result": "running"|"passed"|"failed"|"flake"|"interrupted",
+                            "startedAt": "ISO", "finishedAt": "ISO", "reason": "…" }],
+                 "failures": [{ "stage": "integrate"|"check", "at": "ISO", "entries": ["…"], "reason": "…" }],
+                 "openFailure": { "stage": "…", "at": "ISO", "entries": ["…"], "reason": "…" } | null,
+                 "fixRounds": { "<slug>": 2 }, "movedOut": [{ "slug": "…" }] }],
+  "legacyBatches": [ /* the merge batches, as `batches` above */ ] }
+```
+
+An entry is `queued`, `integrated` (in a release branch that has not passed), `merged` (its release
+reached the branch), `moved-out` or `dropped`. Its `history` lines (`added at`, `integrated into
+release <v>`, `moved out`, `requeued`, `merged into <branch> with release <v>`, `dropped`) let replay
+rebuild its status at any time; entries without history (merged by a merge batch) are replayed from
+`legacyBatches`. Releases run in version order and the merge machine works on the oldest unfinished
+one: its integrated entries sit in the machine, entries already integrated into the next release ride
+lowest on the queue column, then the queued ones. Git shows one merge per release (`Merge branch
+'release/<v>' into <branch>`); the theater counts each job the release carried as merged then. Reasons
+appear only in the private view, redacted. A read that catches the file half-written keeps the last
+good copy for up to two minutes.
+
 ### `sources.locks`
 
 A folder with one subfolder per lock, each holding an `owner` file of the form `holder unixSeconds`:
 `<rules.locks.merge>/owner` (the merge lock, shown on the vault), `<rules.locks.exclusive>/owner` (a hold
 on every test pod) and `<rules.locks.slotPrefix>1/owner` … `<slotPrefix><slotCount>/owner` (one per test
-pod).
+pod). With release trains, `<rules.locks.release><version>/owner` (default `release-0.3.1`) is held by
+the merger while it integrates into that release, or by its fixer; the merge lock is the target
+branch's (set `rules.locks.merge` to `develop` when the runner names it so); a release check holds the
+exclusive hold and every pod as `release-<version>`. The theater reads these to tell what the runner
+does with each release (see `queue.releases` in [API.md](API.md)).
 
 ### `sources.progress`
 

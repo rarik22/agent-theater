@@ -97,10 +97,23 @@ export function pulsesAt(kind, t, seed = 0, travel = 1.6) {
  * Merge machine state from the scene: 'pass' right after a merge went through, 'fail' right after a
  * bounce, 'working' while a batch runs or parcels sit in its window, else 'idle'.
  */
-export function mergeState({ batchRunning = false, windowCount = 0, sinceMerged = Infinity, sinceBounced = Infinity } = {}, holdS = 3) {
+const RELEASE_WORK = new Set(['integrating', 'checking', 'merging']);
+
+/**
+ * The merge machine's state: fail (a bounce just landed), pass (a merge just landed), working, fixing
+ * (release trains: the machine's release is being fixed, or has an open failure) or idle. With release
+ * trains the machine works while the runner integrates, checks or merges a release (the machine's own,
+ * or the next one taking entries); entries waiting in a release do not keep it busy.
+ */
+export function mergeState({ batchRunning = false, windowCount = 0, sinceMerged = Infinity, sinceBounced = Infinity, release = null } = {}, holdS = 3) {
   // a bounce shows red only when it is the latest news; merges landing in the same update show green
   if (sinceBounced < holdS && sinceBounced < sinceMerged) return 'fail';
   if (sinceMerged < holdS) return 'pass';
+  if (release) {
+    if (RELEASE_WORK.has(release.activity) || RELEASE_WORK.has(release.next?.activity)) return 'working';
+    if (release.activity === 'fixing' || release.openFailure) return 'fixing';
+    return 'idle';
+  }
   if (batchRunning || windowCount > 0) return 'working';
   return 'idle';
 }

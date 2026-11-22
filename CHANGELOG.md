@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.2.0 (2026-11-22)
+
+Release trains: the merge machine follows a runner that merges in releases instead of batches,
+and still plays the batch history before it.
+
+- The queue file's schema 2 is read: entries `queued`, `integrated` (in a release, waiting for its
+  check), `merged` (with their release), `moved-out` and `dropped`; releases with their entries, check
+  runs, failures, open failure and fix rounds; the old batches as `legacyBatches`. A read that catches
+  the file half-written keeps the last good copy for up to two minutes.
+- The `release-<version>` locks are read, and every lock owner by name.
+- `queue.releases` and `queue.release` in the state: version, status, counted out of capacity, the open
+  failure, fix rounds, the latest check, and what the runner does now (`merging`, `checking`,
+  `integrating`, `fixing`, else the status). Reasons only in the private view, redacted.
+- The machine works on the oldest unfinished release: its integrated jobs in the window (the latest
+  four), its counter at counted/capacity, a plate "REL 0.1.1 CHECKING" under it with the open failure,
+  fix rounds and the next release in small letters. It works while a release is integrated, checked or
+  merged, and holds a steady red lamp while one is fixed. Jobs already integrated into the next release
+  ride lowest on the queue column with a green seal; then the queued ones.
+- Between the runner's merger runs, the merger stays at the machine while releases have work, saying
+  what it waits for; a click opens the releases' timeline as its log.
+- Git's one merge per release counts every job the release carried as merged (job counters, `merged`
+  events, the parcels), with a `released` event; `integrated` events, and `bounced` for a job moved out
+  of its release.
+- The controller shows the machine's release (`project.release`) in place of a batch number.
+- Test booths held by a release check, a fixer or the controller read REL, FIX and CTRL.
+- Replay plays both histories: merge batches, and releases as they stood at each frame (entries from
+  their history lines).
+
 ## 0.1.1 (2026-11-21)
 
 - The plugin now runs in VS Code's chat panel and the desktop app. Both start Claude Code as an SDK

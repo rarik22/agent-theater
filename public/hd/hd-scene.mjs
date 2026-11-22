@@ -21,7 +21,20 @@ export const DEFAULT_STATIONS = Object.freeze([
 ]);
 export const EVENT_TYPES = ['merged', 'bounced', 'done', 'stopped', 'pushed'];
 const LANE_STATUS = ['running', 'completed', 'killed', 'waiting', 'idle'];
-const QUEUE_STATUS = ['ready', 'batched', 'merged', 'bounced', 'held', 'dropped'];
+// merge batches: ready, batched, bounced, held; release trains: queued, integrated, moved-out
+const QUEUE_STATUS = ['ready', 'batched', 'merged', 'bounced', 'held', 'dropped', 'queued', 'integrated', 'moved-out'];
+const VERSION = /^\d{1,4}\.\d{1,4}\.\d{1,4}(?:-[a-z0-9.]{1,12})?$/i;
+const RELEASE_ACTIVITY = ['merging', 'checking', 'integrating', 'fixing', 'passed', 'open', 'verifying'];
+/** Order two release versions (numeric parts first). */
+export function compareVersions(a, b) {
+  const pa = String(a ?? '').split(/[.-]/);
+  const pb = String(b ?? '').split(/[.-]/);
+  for (let i = 0; i < 3; i += 1) {
+    const d = Number(pa[i] || 0) - Number(pb[i] || 0);
+    if (d) return d;
+  }
+  return String(pa.slice(3).join('.')).localeCompare(String(pb.slice(3).join('.')));
+}
 
 const ROLE_SET = new Set(ROLES);
 const KIND_SET = new Set(KINDS);
@@ -199,19 +212,73 @@ export function placeAgents(agents, rows) {
   return out;
 }
 
-/** The merge queue: parcels on the belt (oldest lowest) and parcels in the merge window. */
+/** One release of the state, checked: version, status, what the runner does with it, counts. */
+function releaseOf(r) {
+  if (!r || typeof r !== 'object' || !VERSION.test(String(r.version ?? ''))) return null;
+  const whole = (v, d = 0) => (Number.isInteger(v) && v >= 0 ? Math.min(v, 999) : d);
+  const started = r.check && r.check.result === 'running' ? Date.parse(r.check.startedAt) : NaN;
+  return {
+    version: String(r.version),
+    status: typeof r.status === 'string' && /^[a-z-]{1,16}$/.test(r.status) ? r.status : 'open',
+    activity: RELEASE_ACTIVITY.includes(r.activity) ? r.activity : 'open',
+    counted: whole(r.counted),
+    capacity: Math.max(1, whole(r.capacity, 10)),
+    fixRounds: whole(r.fixRounds),
+    openFailure: Boolean(r.openFailure),
+    checkStartedMs: Number.isFinite(started) ? started : null,
+    entries: Array.isArray(r.entries) ? r.entries.map(safeSlug).filter(Boolean) : [],
+  };
+}
+
+/**
+ * Release trains: the release on the merge machine (the oldest unfinished one, or one that just
+ * passed) and the next unfinished one after it, or null when the queue has no releases.
+ */
+export function releaseScene(state) {
+  const machine = releaseOf(state?.queue?.release);
+  if (!machine) return null;
+  const list = Array.isArray(state.queue.releases) ? state.queue.releases.map(releaseOf).filter(Boolean) : [];
+  const next = list.filter((r) => r.status !== 'passed' && compareVersions(r.version, machine.version) > 0).sort((a, b) => compareVersions(a.version, b.version))[0] || null;
+  return { ...machine, next };
+}
+
+/** How many parcels the merge window shows (2 x 2). */
+export const WINDOW_SLOTS = 4;
+
+/**
+ * The merge queue: parcels on the belt (oldest lowest) and parcels in the merge window. With merge batches the
+ * belt holds ready work and the window the running batch. Release trains: the window holds the
+ * machine release's integrated entries (the latest four, in integration order), and the belt follows
+ * release order: entries already integrated into a later release lowest (they go next), then the
+ * queued ones in queue order.
+ */
 export function queueScene(state) {
   const entries = Array.isArray(state?.queue?.entries) ? state.queue.entries : [];
   const batch = state?.queue?.batch && Array.isArray(state.queue.batch.slugs) ? state.queue.batch : null;
+  const release = releaseScene(state);
   const items = [];
   for (const e of entries) {
     const slug = safeSlug(e?.slug);
     if (!slug) continue;
     const status = QUEUE_STATUS.includes(e.status) ? e.status : 'ready';
     const readyAt = Date.parse(e.readyAt);
-    items.push({ slug, job: safeKey(e.id), lane: isLaneId(e.lane) ? e.lane : null, status, readyAt: Number.isFinite(readyAt) ? readyAt : 0 });
+    const integratedAt = Date.parse(e.integratedAt);
+    items.push({ slug, job: safeKey(e.id), lane: isLaneId(e.lane) ? e.lane : null, status, readyAt: Number.isFinite(readyAt) ? readyAt : 0, release: VERSION.test(String(e.release ?? '')) ? String(e.release) : null, integratedAt: Number.isFinite(integratedAt) ? integratedAt : 0 });
   }
-  const belt = items.filter((e) => e.status === 'ready' || e.status === 'held').sort((a, b) => a.readyAt - b.readyAt || a.slug.localeCompare(b.slug));
+  const byStatus = new Map(items.map((e) => [e.slug, e]));
+  const bounced = new Set(items.filter((e) => (e.status === 'bounced' || e.status === 'moved-out') && e.lane).map((e) => e.lane));
+  const byQueue = (a, b) => a.readyAt - b.readyAt || a.slug.localeCompare(b.slug);
+  if (release) {
+    const order = new Map(release.entries.map((s, i) => [s, i]));
+    const at = (e) => order.get(e.slug) ?? Number.MAX_SAFE_INTEGER;
+    const inMachine = items.filter((e) => e.status === 'integrated' && e.release === release.version).sort((a, b) => at(a) - at(b) || a.integratedAt - b.integratedAt || a.slug.localeCompare(b.slug));
+    const window = inMachine.slice(-WINDOW_SLOTS).map((e) => ({ slug: e.slug, job: e.job, lane: e.lane, status: 'integrated' }));
+    const later = items.filter((e) => e.status === 'integrated' && e.release !== release.version).sort((a, b) => compareVersions(a.release, b.release) || a.integratedAt - b.integratedAt || a.slug.localeCompare(b.slug));
+    const waiting = items.filter((e) => e.status === 'queued' || e.status === 'ready' || e.status === 'held').sort(byQueue);
+    const belt = [...later.map((e) => ({ ...e, integrated: true })), ...waiting];
+    return { belt, window, bounced, byStatus, batchRunning: false, release, inRelease: inMachine.length };
+  }
+  const belt = items.filter((e) => e.status === 'ready' || e.status === 'held').sort(byQueue);
   const window = [];
   const inWindow = new Set();
   if (batch) {
@@ -227,17 +294,22 @@ export function queueScene(state) {
     window.push({ ...e });
     inWindow.add(e.slug);
   }
-  const bounced = new Set(items.filter((e) => e.status === 'bounced' && e.lane).map((e) => e.lane));
-  const byStatus = new Map(items.map((e) => [e.slug, e]));
-  return { belt, window, bounced, byStatus, batchRunning: Boolean(batch) };
+  return { belt, window, bounced, byStatus, batchRunning: Boolean(batch), release: null, inRelease: 0 };
 }
 
-/** Who holds a lock or slot, as the stage colours it: a lane, the merge batch, or someone else. */
+/**
+ * Who holds a lock or slot, as the stage colours it: a lane, the merge machine (a merge batch, the
+ * merger, a release's check), or someone else (a fixer, the controller, an agent).
+ */
 export function holderOf(owner) {
   if (!owner || typeof owner !== 'object') return null;
   if (!owner.holder && !owner.job && !owner.lane) return null;
   if (isLaneId(owner.lane)) return { kind: 'lane', lane: owner.lane };
-  if (typeof owner.holder === 'string' && /merge/i.test(owner.holder)) return { kind: 'merge', lane: null };
+  const h = typeof owner.holder === 'string' ? owner.holder : '';
+  if (/^release\b/i.test(h)) return { kind: 'merge', lane: null, word: 'REL' };
+  if (/merge/i.test(h)) return { kind: 'merge', lane: null };
+  if (/^fixer\b/i.test(h)) return { kind: 'other', lane: null, word: 'FIX' };
+  if (/^controller\b/i.test(h)) return { kind: 'other', lane: null, word: 'CTRL' };
   return { kind: 'other', lane: null };
 }
 
@@ -292,6 +364,7 @@ export function describeScene(scene) {
   const lead = n === 0 ? 'No agents are working.' : `${n} ${n === 1 ? 'agent' : 'agents'}: ${parts.join('; ')}${n > 12 ? '; and more' : ''}.`;
   const r = scene.rows.length ? ` ${scene.rows.length} ${scene.rows.length === 1 ? 'lane' : 'lanes'} on stage.` : '';
   const q = scene.belt.length ? ` ${scene.belt.length} waiting for merge.` : '';
-  const b = scene.window.length ? ` Merge batch of ${scene.window.length} running.` : '';
+  const rel = scene.release;
+  const b = rel ? ` Release ${rel.version} ${rel.activity}, ${rel.counted} of ${rel.capacity}.` : scene.window.length ? ` Merge batch of ${scene.window.length} running.` : '';
   return `${lead}${r}${q}${b}${scene.sample ? ' Sample data.' : ''}`;
 }

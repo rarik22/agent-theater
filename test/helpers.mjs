@@ -134,9 +134,23 @@ export function assertStateShape(state) {
   assert.ok(Array.isArray(state.queue.entries));
   for (const e of state.queue.entries) {
     assert.equal(typeof e.slug, 'string');
-    assert.ok(['ready', 'batched', 'merged', 'bounced', 'held', 'dropped'].includes(e.status), `status ${e.status}`);
+    assert.ok(['ready', 'batched', 'merged', 'bounced', 'held', 'dropped', 'queued', 'integrated', 'moved-out'].includes(e.status), `status ${e.status}`);
+    if (e.release !== undefined) assert.match(e.release, /^\d+\.\d+\.\d+/, 'entry release');
+    if (e.status === 'integrated' && state.queue.releases) assert.equal(typeof e.release, 'string', 'an integrated entry names its release');
   }
   assert.ok(state.queue.batch === null || state.queue.batch === undefined || (Number.isInteger(state.queue.batch.n) && Array.isArray(state.queue.batch.slugs)));
+  // release trains: the releases (version order) and the one on the machine
+  if (state.queue.releases !== undefined) {
+    assert.ok(Array.isArray(state.queue.releases));
+    for (const r of state.queue.releases) {
+      assert.match(r.version, /^\d+\.\d+\.\d+/);
+      assert.ok(['merging', 'checking', 'integrating', 'fixing', 'passed', 'open', 'verifying'].includes(r.activity), `activity ${r.activity}`);
+      assert.ok(Number.isInteger(r.counted) && Number.isInteger(r.capacity) && r.capacity > 0);
+      assert.ok(Array.isArray(r.entries) && r.entries.every((s) => typeof s === 'string'));
+      assert.ok(r.openFailure === null || Array.isArray(r.openFailure.entries));
+    }
+    assert.ok(state.queue.release === null || state.queue.releases.some((r) => r.version === state.queue.release.version), 'the machine release is listed');
+  }
   assert.ok(Array.isArray(state.slots));
   for (const s of state.slots) {
     assert.ok(Number.isInteger(s.n));
@@ -146,7 +160,7 @@ export function assertStateShape(state) {
   for (const key of ['exclusive', 'lock']) assert.ok(state[key] === null || typeof state[key].holder === 'string', key);
   assert.ok(Array.isArray(state.events));
   for (const e of state.events) {
-    assert.ok(['merged', 'bounced', 'started', 'finished', 'queued', 'done', 'stopped', 'pushed'].includes(e.type), `event ${e.type}`);
+    assert.ok(['merged', 'bounced', 'started', 'finished', 'queued', 'done', 'stopped', 'pushed', 'integrated', 'released'].includes(e.type), `event ${e.type}`);
     assert.ok(isIsoOrNull(e.at) && e.at !== null);
     assert.equal(typeof e.text, 'string');
   }

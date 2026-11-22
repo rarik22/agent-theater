@@ -148,9 +148,10 @@ const count = (v) => (Number.isInteger(v) && v >= 0 ? v : null);
  * The numbers the controller shows, from the world's project and batch (null fields show dashes).
  *   jobs: "done/total", pct: "NN%" (floored, so 100% only when every job is done), fraction 0..1;
  *   agents: agents working now (on stage); features: "done/total" of the tracked features;
- *   batch: the running merge batch number.
+ *   batch: the running merge batch number, or with release trains the machine's release (project.release).
  */
 export function controllerReadout({ project = null, agents = 0, batch = null } = {}) {
+  const release = typeof project?.release === 'string' && /^\d{1,4}\.\d{1,4}\.\d{1,4}(?:-[a-z0-9.]{1,12})?$/i.test(project.release) ? project.release.slice(0, 12) : null;
   const done = count(project?.done);
   const total = count(project?.total);
   const ok = done !== null && total !== null && total > 0;
@@ -164,7 +165,7 @@ export function controllerReadout({ project = null, agents = 0, batch = null } =
     fraction: ok ? Math.min(1, done / total) : null,
     agents: Math.min(99, Math.max(0, agents | 0)),
     features: fok ? `${Math.min(fd, ft)}/${ft}` : '--/--',
-    batch: n !== null && n > 0 ? String(n) : '-',
+    batch: release || (n !== null && n > 0 ? String(n) : '-'),
   };
 }
 

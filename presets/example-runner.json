@@ -88,7 +88,8 @@
     "locks": {
       "merge": "develop",
       "exclusive": "exclusive",
-      "slotPrefix": "slot-"
+      "slotPrefix": "slot-",
+      "release": "release-"
     },
     "liveChecks": [
       "ui:tour",

@@ -24,15 +24,17 @@ Query flags on every `GET` endpoint:
 
 ```text
 { now, mode: "live"|"replay", sample, public,
-  project: { name, done, total, features: { done, total } | null, batch,
+  project: { name, done, total, features: { done, total } | null, batch, release?,
              labels: { jobs, features, batch } },
   pipeline: { model: "runs"|"jobs", stations: [{ tag, kind }],
               lanes: [{ id, tag, stations: [{ tag, kind }], current, done, status, show, active,
                         progress: { done, total } }] },
-  agents: [{ id, role, job, lane, station, stationTag, tag, place?, standalone?, title, label,
+  agents: [{ id, role, job, lane, station, stationTag, tag, place?, standalone?, idle?, title, label,
              since, activeAt, say, action: { kind, text, since, background? } }],
-  queue: { entries: [{ slug, id, lane, status, title, kind, bounces, readyAt }],
-           batch: { n, slugs, startedAt, status } | null, lastBatch },
+  queue: { entries: [{ slug, id, lane, status, title, kind, bounces, readyAt,
+                       release?, integratedAt?, mergedAt? }],
+           batch: { n, slugs, startedAt, status } | null, lastBatch,
+           releases?: [release], release?: release | null },
   slots: [{ n, holder, job, lane, since }], exclusive: { holder, job, lane, since } | null,
   lock: { holder, job, lane, since } | null,
   events: [{ id, at, type, job, lane?, slug?, role?, text }],
@@ -44,8 +46,10 @@ Query flags on every `GET` endpoint:
   started in the last `countHours` (runs model), a preset's job totals (jobs model), or the last
   `progress` event of the event API. `features` is the second counter (agents finished of started, or
   a preset's tracked features). `batch` is the third (runs running now, or the running merge batch).
-  `labels` are the words the controller shows for them. `name` is `projectName` from the config, or
-  null; the stage never draws it.
+  With release trains, `release` is the version on the merge machine and the controller shows it in
+  place of the batch (labelled `REL` unless the counters are named in the config). `labels` are the
+  words the controller shows for them. `name` is `projectName` from the config, or null; the stage
+  never draws it.
 - **pipeline.lanes**: the lanes the stage can show, in order. `id` is the chip code (at most six
   capitals, digits or dashes, unique among the lanes), `tag` a public name (at most 16 characters).
   `stations` are 1 to 6 stations, each with a tag (at most 12 characters) and the `kind` of console it
@@ -63,11 +67,47 @@ Query flags on every `GET` endpoint:
   `say` is the line its speech bubble shows: the generic phrase in public mode; in the private view
   the first sentence of the agent's latest message (redacted, at most 140 characters) while it is less
   than 15 minutes old, else the action's text.
+- **queue**: the merge queue file. With merge batches an entry's `status` is `ready`, `batched`,
+  `bounced`, `held`, `merged` or `dropped`, and `batch` is the running batch. With release trains (a
+  schema-2 queue file, see [SOURCES.md](SOURCES.md)) it is `queued` (waiting for the next release),
+  `integrated` (merged into the release branch `release`, waiting for that release's check; never
+  merged and never queued), `merged` (its release reached the branch: `release`, `mergedAt`),
+  `moved-out` (taken out of its release, back in its lane) or `dropped`. Merged and dropped entries
+  stay listed for `recentQueueMinutes`.
+- **queue.releases** (release trains only): the unfinished releases and those that passed in the last
+  `recentQueueMinutes`, in version order. `queue.release` is the one on the merge machine: the oldest
+  unfinished release (releases reach the branch in order), else the one that just passed.
+
+  ```text
+  { version, status: "open"|"verifying"|"fixing"|"passed", activity, gate, capacity, counted,
+    entries: [slug], fixes, fixRounds, failures, openFailure: { stage, at, entries, reason? } | null,
+    checks, check: { n, result, startedAt, finishedAt, reason? } | null,
+    openedAt, closedAt, passedAt, lastIntegratedAt, tag }
+  ```
+
+  `activity` is what the runner does with it now, from its record and the lock owners: `merging`
+  (the branch's merge lock is held, for the oldest unfinished release), `checking` (a check run is
+  running, or `release-<v>` holds the exclusive hold or every test booth), `integrating` (a merger
+  holds the `release-<v>` lock), `fixing` (status fixing, or a fixer holds its lock or a booth), else
+  its status (`open`, `verifying`, `passed`). `counted` counts its counted entries (`entries` lists
+  them in integration order, without those moved out); fix merges (`fixes`) never count. `fixRounds` is
+  the sum of its per-entry fix rounds. `reason` fields are only in the private view, redacted. In replay
+  frames no lock owners are known, so `activity` comes from the record alone, and `fixRounds` counts
+  the fix merges made by then.
+- **agents** with release trains: the runner starts a merger run per step, so between runs no merger
+  is live. While releases have work (an unfinished release, or jobs queued for one) the state keeps a
+  merger at the machine: `id: "release-merger"`, `idle: true`, `place: "merge"`, its `say` what it
+  waits for ("waiting for the fix", "waiting for jobs (7/10)"). `GET /api/agent?id=release-merger`
+  returns the releases' timeline as its log.
 - **slots**: the test pods. With a locks source they are its owners; otherwise they hold the agents
-  that run tests or checks in the background.
+  that run tests or checks in the background. Holders are job ids, known queue slugs, or public words:
+  `release 0.1.2` (a release check), `fixer 0.1.2`, `controller 0.1.2`, `merger`, `agent`.
 - **events**, oldest first, each with a stable `id`: `started` and `finished` (agents), `done` and
   `stopped` (workflow runs and event-API lanes), `pushed` (an agent ran `git push`), `merged` (git
-  merges into the configured branch, or the queue file), `queued` and `bounced` (the queue file).
+  merges into the configured branch, or the queue file), `queued` and `bounced` (the queue file). With
+  release trains: `integrated` (a job joined a release, with `release`), `bounced` also for a job moved
+  out of its release, `released` (a release merged into the branch), and one `merged` per job the
+  release carried (git shows one merge per release).
 - **sources**: each source is `ok`, `unavailable` (configured but unreadable) or `off`. **Missing
   sources are never filled in**: their values are empty or `null`.
 

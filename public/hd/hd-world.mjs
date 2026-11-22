@@ -23,7 +23,9 @@ const HANDOFF_S = 180;
 const RECENT_S = 300;
 const BEAM_S = 0.45;
 const PLANE_S = 2.2;
-const LEFT_BATCH = new Set(['bounced', 'merged', 'dropped']);
+const LEFT_BATCH = new Set(['bounced', 'merged', 'dropped', 'moved-out']);
+// a release check's nominal length for the machine's gauge (a full check runs about two hours)
+const CHECK_NOMINAL_MS = 2 * 3600_000;
 
 export function createWorld({ aspect = '16:9', calm = false, big = false } = {}) {
   const A = normAspect(aspect);
@@ -56,6 +58,7 @@ export function createWorld({ aspect = '16:9', calm = false, big = false } = {})
     nowMs: 0,
     nowAt: 0,
     batchStartedMs: NaN,
+    release: null,
     project: { done: null, total: null, features: null, labels: null },
     lanes: [],
     rowInfo: new Map(),
@@ -91,10 +94,11 @@ export function batchWindow(scene) {
   return scene.window.filter((e) => !LEFT_BATCH.has(scene.byStatus.get(e.slug)?.status));
 }
 
-/** Short code for a holder on a pod or the vault display: the lane code, MERGE, or HOLD. */
+/** Short code for a holder on a pod or the vault display: the lane code, REL, FIX, CTRL, MERGE, or HOLD. */
 export function holderLabel(owner, holder) {
   if (!holder) return '';
   if (holder.kind === 'lane') return holder.lane;
+  if (holder.word) return holder.word;
   if (holder.kind === 'merge') return 'MERGE';
   return 'HOLD';
 }
@@ -310,7 +314,7 @@ function syncParcels(world, scene, snap) {
       if (p.mode === 'belt' && last && last.x === P.qx) p.path[p.path.length - 1] = { ...slot };
       else setPath(p, [{ x: P.qx, y: Math.round(p.y) }, slot], SPEED.belt);
     }
-    Object.assign(p, { mode: 'belt', tx: slot.x, ty: slot.y, lane: e.lane || p.lane, job: e.job || p.job });
+    Object.assign(p, { mode: 'belt', tx: slot.x, ty: slot.y, lane: e.lane || p.lane, job: e.job || p.job, integrated: Boolean(e.integrated) });
   });
   scene.window.forEach((e, j) => {
     const slot = windowSlot(L, j);
@@ -332,7 +336,9 @@ function syncParcels(world, scene, snap) {
     const st = scene.byStatus.get(p.slug)?.status;
     if (snap) world.parcels.delete(p.slug);
     else if (st === 'merged') startMerge(world, p);
-    else if (st === 'bounced') startBounce(world, p);
+    else if (st === 'bounced' || st === 'moved-out') startBounce(world, p);
+    // still in its release, just past the four the window shows: it stays inside the machine
+    else if (st === 'integrated') world.parcels.delete(p.slug);
     else {
       world.parcels.delete(p.slug);
       if (!world.calm) world.puffs.push({ x: Math.round(p.x) + 8, y: Math.round(p.y) + 6, t0: world.t, colour: 'grey' });
@@ -436,6 +442,8 @@ export function applyState(world, state, { first = false } = {}) {
     world.nowAt = world.t;
   }
   world.batchStartedMs = Date.parse(state?.queue?.batch?.startedAt);
+  // release trains: the machine's release (its check's start drives the gauge while it runs)
+  world.release = scene.release;
   const whole = (v) => (Number.isInteger(v) && v >= 0 ? v : null);
   const feat = state?.project?.features;
   const lbl = state?.project?.labels || {};
@@ -444,6 +452,7 @@ export function applyState(world, state, { first = false } = {}) {
     total: whole(state?.project?.total),
     features: feat && whole(feat.done) !== null && whole(feat.total) !== null ? { done: feat.done, total: feat.total } : null,
     labels: { jobs: safeWord(lbl.jobs) || 'JOBS', features: safeWord(lbl.features) || 'FEATURES', batch: safeWord(lbl.batch) || 'BATCH' },
+    release: typeof state?.project?.release === 'string' && /^\d{1,4}\.\d{1,4}\.\d{1,4}(?:-[a-z0-9.]{1,12})?$/i.test(state.project.release) ? state.project.release : null,
   };
   world.batchN = whole(state?.project?.batch) ?? whole(Number(state?.queue?.batch?.n));
   const slots = Array.isArray(state?.slots) ? state.slots : [];
@@ -502,13 +511,15 @@ function follow(e, dt) {
  */
 function easeMerge(world, dt) {
   const sc = world.scene;
-  const ms = mergeState({ batchRunning: Boolean(sc?.batchRunning), windowCount: sc ? sc.window.length : 0, sinceMerged: world.t - world.lastMerged, sinceBounced: world.t - world.lastBounced });
+  const ms = mergeState({ batchRunning: Boolean(sc?.batchRunning), windowCount: sc ? sc.window.length : 0, sinceMerged: world.t - world.lastMerged, sinceBounced: world.t - world.lastBounced, release: sc?.release || null });
   const working = ms === 'working' && !world.calm;
   const k = (tau) => 1 - Math.exp(-Math.max(0, dt) / tau);
   world.gearW += ((working ? 1.6 : 0.12) - world.gearW) * k(0.5);
   world.gearAng += world.gearW * dt;
   const nowMs = world.nowMs + (world.t - world.nowAt) * 1000;
-  const reading = ms === 'pass' ? 1 : batchProgress(world.batchStartedMs, nowMs);
+  const rel = sc?.release || null;
+  // the gauge: a batch's running time; a release check's time against its nominal two hours, else how full the release is
+  const reading = ms === 'pass' ? 1 : rel ? (rel.activity === 'checking' && rel.checkStartedMs !== null ? batchProgress(rel.checkStartedMs, nowMs, CHECK_NOMINAL_MS) : Math.min(1, rel.counted / rel.capacity)) : batchProgress(world.batchStartedMs, nowMs);
   world.needle += (reading - world.needle) * k(0.35);
   world.mergeEase += ((working ? 1 : 0) - world.mergeEase) * k(0.4);
 }

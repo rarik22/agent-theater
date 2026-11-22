@@ -217,6 +217,12 @@ always walks.
       Pushes send a packet up the line to the remote. Background tests and live checks light up the
       test pods with the colour of the lane that started them.
       <br><br>
+      With a runner that merges in releases, the machine works one release at a time, in version
+      order. Its plate says which release and what is happening to it (integrating, checking, fixing,
+      merging), and the counter shows how full it is (7/10). Jobs already promised to the next
+      release ride lowest on the column, marked with a green seal. Between runs the merger waits by
+      the lever and says what for.
+      <br><br>
       Nothing here runs on a timer. If the machine is moving, something really finished.
     </td>
   </tr>

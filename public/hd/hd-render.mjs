@@ -15,6 +15,7 @@ import { along, stationGeometry, windowBox } from './hd-layout.mjs';
 import { drawFeeders, drawMergeDynamic, drawQueueStatic, drawRollers, mergeBody, parcelSprite } from './hd-merge.mjs';
 import { LIGHT, R, RAMP_OF, SHADE, laneColours } from './hd-palette.mjs';
 import { CONSOLE_AT, DESK_W, SCREEN, consoleSprite, deskSprite, drawChip, drawLampLight, drawPadDone, drawPadLit, drawRowStatic, drawStandby, drawStationLabel, monitorSprite } from './hd-stations.mjs';
+import { TINY_H, tinyFit, tinyText, tinyWidth } from './hd-tiny.mjs';
 import { PLANE_S, BEAM_S, beltMoving, planeAt } from './hd-world.mjs';
 import { cloudSprite, drawCable, drawCloud, drawDish, drawPacket, drawPedestal, drawPipe, drawPipeFlow, drawPlane, drawPods, drawRackStatic, drawUplink, drawVault, vaultSprite } from './hd-yard.mjs';
 
@@ -636,7 +637,8 @@ function buildStatic(world) {
   blit(f, mergeBody(L.merge.flip), L.merge.x, L.merge.y);
   const Y = world.yardLabels || YARD_LABELS;
   label(f, Y.test, L.labels.test.cx, L.labels.test.y, L.ts);
-  label(f, Y.merge, L.labels.merge.cx, L.labels.merge.y, L.ts);
+  // release trains: the machine's plate names its release instead (drawn each frame)
+  if (!world.scene?.release) label(f, Y.merge, L.labels.merge.cx, L.labels.merge.y, L.ts);
   label(f, Y.develop, L.labels.develop.cx, L.labels.develop.y, L.ts);
   label(f, Y.remote, L.labels.remote.cx, L.labels.remote.y, L.ts);
   void cloudSprite;
@@ -645,6 +647,57 @@ function buildStatic(world) {
 
 /** The yard's plate words when the state names none. */
 export const YARD_LABELS = Object.freeze({ test: 'TEST', merge: 'MERGE', develop: 'DEVELOP', remote: 'REMOTE' });
+
+// the machine plate's words for what the runner does with the release, long and short
+const RELEASE_WORDS = {
+  merging: ['MERGING', 'MERGE'],
+  checking: ['CHECKING', 'CHECK'],
+  integrating: ['INTEGRATING', 'INTEG'],
+  fixing: ['FIXING', 'FIX'],
+  passed: ['PASSED', 'PASS'],
+  open: ['OPEN', 'OPEN'],
+  verifying: ['CHECK DUE', 'DUE'],
+};
+
+/**
+ * The plate under the merge machine with release trains: "REL 0.1.2 CHECKING" (the release and what
+ * the runner does with it, coloured by that), shortened to fit the machine, and below it in tiny
+ * letters when there is room: the open failure, the fix rounds, and the next release.
+ */
+export function releasePlate(rel, maxW, ts = 1) {
+  const [long, short] = RELEASE_WORDS[rel.activity] || [String(rel.activity || '').toUpperCase(), String(rel.activity || '').toUpperCase()];
+  const options = [[`REL ${rel.version}`, long], [rel.version, long], [rel.version, short], ['', rel.version]];
+  const line = ([h, w]) => fontText(h ? `${h} ${w}` : w);
+  const pick = options.find((o) => textWidth(line(o), 1, ts) <= maxW) || options[options.length - 1];
+  const notes = [];
+  if (rel.openFailure) notes.push('open failure');
+  if (rel.fixRounds > 0) notes.push(`fix rounds ${rel.fixRounds}`);
+  if (rel.next) notes.push(`next ${rel.next.version} ${rel.next.activity === 'integrating' ? 'integrating' : rel.next.status} ${rel.next.counted}/${rel.next.capacity}`);
+  return { line: line(pick), word: fontText(pick[1]), notes: notes.join(' · ') };
+}
+
+const RELEASE_COLOUR = { merging: 'cyan', checking: 'cyan', integrating: 'cyan', fixing: 'red', passed: 'mint', verifying: 'amber', open: 'steel' };
+
+function drawReleasePlate(f, L, rel, { t = 0, calm = false } = {}) {
+  const ts = L.ts;
+  const cx = L.labels.merge.cx;
+  const y = L.labels.merge.y;
+  const maxW = L.merge.w + 24;
+  const plate = releasePlate(rel, maxW, ts);
+  const lw = textWidth(plate.line, 1, ts);
+  const x = Math.round(cx - lw / 2);
+  text(f, plate.line, x, y, R.steel[1], { top: R.steel[3], shadow: R.void[0], scale: ts });
+  // the activity word (the line's end) again in its colour; a working word breathes
+  const ramp = R[RELEASE_COLOUR[rel.activity] || 'steel'];
+  const lit = RELEASE_COLOUR[rel.activity] === 'cyan' && !calm && Math.floor(t * 2) % 2 ? ramp[ramp.length - 2] : ramp[ramp.length - 1];
+  text(f, plate.word, x + lw - textWidth(plate.word, 1, ts), y, lit, { top: ramp[Math.max(0, ramp.length - 3)], shadow: R.void[0], scale: ts });
+  if (!plate.notes) return;
+  const sc = L.big ? 2 : 1;
+  const ny = y + FONT_H * ts + 2;
+  if (ny + TINY_H * sc > L.h - 1) return;
+  const notes = tinyFit(plate.notes, Math.max(maxW, 120 * sc), sc);
+  tinyText(f, notes, Math.round(cx - tinyWidth(notes, sc) / 2), ny, rel.openFailure ? R.red[3] : R.steel[1], sc);
+}
 
 export function createRenderer() {
   return { frame: null, base: null, baseKey: '' };
@@ -659,7 +712,7 @@ export function renderFrame(rd, world, opts = {}) {
   const calm = Boolean(opts.calm);
   const L = world.layout;
   const Y = world.yardLabels || YARD_LABELS;
-  const key = `${L.aspect}|${L.big}|${world.rowsKey}|${[...world.hues.entries()].join(';')}|${Y.test}|${Y.merge}|${Y.develop}|${Y.remote}`;
+  const key = `${L.aspect}|${L.big}|${world.rowsKey}|${[...world.hues.entries()].join(';')}|${Y.test}|${Y.merge}|${Y.develop}|${Y.remote}|${world.scene?.release ? 'release' : 'batch'}`;
   if (!rd.base || rd.baseKey !== key) {
     rd.base = buildStatic(world);
     rd.baseKey = key;
@@ -793,7 +846,8 @@ export function renderFrame(rd, world, opts = {}) {
   }
   // parcels: on the column, in the chamber (seen through the glass), leaving it after a merge
   const scene = world.scene;
-  const ms = mergeState({ batchRunning: Boolean(scene?.batchRunning), windowCount: scene ? scene.window.length : 0, sinceMerged: t - world.lastMerged, sinceBounced: t - world.lastBounced });
+  const rel = scene?.release || null;
+  const ms = mergeState({ batchRunning: Boolean(scene?.batchRunning), windowCount: scene ? scene.window.length : 0, sinceMerged: t - world.lastMerged, sinceBounced: t - world.lastBounced, release: rel });
   const nowMs = world.nowMs + (t - world.nowAt) * 1000;
   const win = windowBox(L);
   for (const p of world.parcels.values()) {
@@ -807,8 +861,15 @@ export function renderFrame(rd, world, opts = {}) {
     }
     shadeRect(f, x + 1, y + 12, 15, 1, 1);
     blit(f, s, x, y);
+    // release trains: already integrated into the next release (it goes in after the machine's one)
+    if (p.integrated && p.mode === 'belt') {
+      rect(f, x + 11, y + 1, 4, 3, R.mint[3]);
+      hline(f, x + 11, y + 1, 4, R.mint[4]);
+    }
   }
-  drawMergeDynamic(f, L, { state: ms, progress: batchProgress(world.batchStartedMs, nowMs), t, calm, count: scene ? scene.window.length : 0, gearAng: world.gearAng, needle: world.needle, ease: world.mergeEase });
+  const progress = rel ? (rel.activity === 'checking' ? world.needle : Math.min(1, rel.counted / rel.capacity)) : batchProgress(world.batchStartedMs, nowMs);
+  drawMergeDynamic(f, L, { state: ms, progress, t, calm, count: scene ? scene.window.length : 0, gearAng: world.gearAng, needle: world.needle, ease: world.mergeEase, counter: rel ? `${Math.min(rel.counted, 99)}/${Math.min(rel.capacity, 99)}` : null, fill: rel ? Math.min(1, rel.counted / rel.capacity) : null });
+  if (rel) drawReleasePlate(f, L, rel, { t, calm });
   // the merger at the lever pedestal
   const mergers = agents.filter((a) => a.place === 'merge' && a.state !== 'out');
   let lever = 0;

@@ -1,0 +1,167 @@
+{
+  "schema": 2,
+  "entries": [
+    {
+      "slug": "s01-task-01", "id": "S01-TASK-01", "phase": "S01", "kind": "core", "title": "Accounts",
+      "branch": "agent/s01-task-01", "base": "develop", "head": "aaa1111aaa11",
+      "readyAt": "2026-11-19T05:20:00.000Z", "updatedAt": "2026-11-19T05:20:00.000Z",
+      "counted": true, "reverts": [], "history": [],
+      "status": "merged", "mergeSha": "bbb2222", "legacyBatch": 1, "mergedAt": "2026-11-19T06:00:00.000Z"
+    },
+    {
+      "slug": "s03-task-01", "id": "S03-TASK-01", "phase": "S03", "kind": "core", "title": "Backlog",
+      "branch": "agent/s03-task-01", "base": "develop", "head": "c1c1c1c1c1c1",
+      "readyAt": "2026-11-19T07:50:00.000Z", "updatedAt": "2026-11-19T07:50:00.000Z",
+      "counted": true, "reverts": [],
+      "history": [
+        "2026-11-19T07:50:00.000Z added at c1c1c1c1c1c1",
+        "2026-11-19T08:10:00.000Z integrated into release 0.3.0 at d1d1d1d1d1d1",
+        "2026-11-19T10:29:00.000Z merged into develop with release 0.3.0 at e1e1e1e1"
+      ],
+      "status": "merged", "release": "0.3.0", "mergedAt": "2026-11-19T10:29:00.000Z"
+    },
+    {
+      "slug": "s04-task-02", "id": "S04-TASK-02", "phase": "S04", "kind": "core", "title": "Doc pages",
+      "branch": "agent/s04-task-02", "base": "develop", "head": "c2c2c2c2c2c2",
+      "readyAt": "2026-11-19T08:00:00.000Z", "updatedAt": "2026-11-19T08:00:00.000Z",
+      "counted": true, "reverts": [],
+      "history": [
+        "2026-11-19T08:00:00.000Z added at c2c2c2c2c2c2",
+        "2026-11-19T08:20:00.000Z integrated into release 0.3.0 at d2d2d2d2d2d2",
+        "2026-11-19T10:29:00.000Z merged into develop with release 0.3.0 at e1e1e1e1"
+      ],
+      "status": "merged", "release": "0.3.0", "mergedAt": "2026-11-19T10:29:00.000Z"
+    },
+    {
+      "slug": "s03-task-02", "id": "S03-TASK-02", "phase": "S03", "kind": "core", "title": "Filtered backlog and saved views",
+      "branch": "agent/s03-task-02", "base": "agent/s03-task-01", "head": "c3c3c3c3c3c3",
+      "readyAt": "2026-11-19T09:00:00.000Z", "updatedAt": "2026-11-19T09:00:00.000Z",
+      "counted": true, "reverts": [],
+      "history": [
+        "2026-11-19T09:00:00.000Z added at c3c3c3c3c3c3",
+        "2026-11-19T09:10:00.000Z integrated into release 0.3.1 at d3d3d3d3d3d3",
+        "2026-11-19T10:50:00.000Z moved out (release 0.3.1)"
+      ],
+      "status": "moved-out",
+      "movedOut": { "release": "0.3.1", "from": "0.3.1", "cascadeOf": null, "reason": "five fix rounds on verify:full failed", "at": "2026-11-19T10:50:00.000Z" }
+    },
+    {
+      "slug": "s05-task-02", "id": "S05-TASK-02", "phase": "S05", "kind": "core", "title": "Review threads",
+      "branch": "agent/s05-task-02", "base": "develop", "head": "c4c4c4c4c4c4",
+      "readyAt": "2026-11-19T09:20:00.000Z", "updatedAt": "2026-11-19T09:20:00.000Z",
+      "counted": true, "reverts": [],
+      "history": [
+        "2026-11-19T09:20:00.000Z added at c4c4c4c4c4c4",
+        "2026-11-19T09:30:00.000Z integrated into release 0.3.1 at d4d4d4d4d4d4"
+      ],
+      "status": "integrated", "release": "0.3.1", "integrationSha": "d4d4d4d4d4d4", "integratedAt": "2026-11-19T09:30:00.000Z"
+    },
+    {
+      "slug": "s12-task-02", "id": "S12-TASK-02", "phase": "S12", "kind": "core", "title": "Presence",
+      "branch": "agent/s12-task-02", "base": "develop", "head": "c5c5c5c5c5c5",
+      "readyAt": "2026-11-19T09:40:00.000Z", "updatedAt": "2026-11-19T09:40:00.000Z",
+      "counted": true, "reverts": [],
+      "history": [
+        "2026-11-19T09:40:00.000Z added at c5c5c5c5c5c5",
+        "2026-11-19T10:00:00.000Z integrated into release 0.3.1 at d5d5d5d5d5d5"
+      ],
+      "status": "integrated", "release": "0.3.1", "integrationSha": "d5d5d5d5d5d5", "integratedAt": "2026-11-19T10:00:00.000Z"
+    },
+    {
+      "slug": "s02-task-06", "id": "S02-TASK-06", "phase": "S02", "kind": "core", "title": "Image tags",
+      "branch": "agent/s02-task-06", "base": "develop", "head": "c6c6c6c6c6c6",
+      "readyAt": "2026-11-19T10:30:00.000Z", "updatedAt": "2026-11-19T10:30:00.000Z",
+      "counted": true, "reverts": [],
+      "history": [
+        "2026-11-19T10:30:00.000Z added at c6c6c6c6c6c6",
+        "2026-11-19T10:40:00.000Z integrated into release 0.3.1 at d6d6d6d6d6d6"
+      ],
+      "status": "integrated", "release": "0.3.1", "integrationSha": "d6d6d6d6d6d6", "integratedAt": "2026-11-19T10:40:00.000Z"
+    },
+    {
+      "slug": "s05-task-01", "id": "S05-TASK-01", "phase": "S05", "kind": "core", "title": "Asset library",
+      "branch": "agent/s05-task-01", "base": "develop", "head": "c7c7c7c7c7c7",
+      "readyAt": "2026-11-19T11:10:00.000Z", "updatedAt": "2026-11-19T11:10:00.000Z",
+      "counted": true, "reverts": [],
+      "history": [
+        "2026-11-19T11:10:00.000Z added at c7c7c7c7c7c7",
+        "2026-11-19T11:20:00.000Z integrated into release 0.3.2 at d7d7d7d7d7d7"
+      ],
+      "status": "integrated", "release": "0.3.2", "integrationSha": "d7d7d7d7d7d7", "integratedAt": "2026-11-19T11:20:00.000Z"
+    },
+    {
+      "slug": "s12-task-03", "id": "S12-TASK-03", "phase": "S12", "kind": "core", "title": "Comments",
+      "branch": "agent/s12-task-03", "base": "develop", "head": "c8c8c8c8c8c8",
+      "readyAt": "2026-11-19T11:40:00.000Z", "updatedAt": "2026-11-19T11:40:00.000Z",
+      "counted": true, "reverts": [],
+      "history": ["2026-11-19T11:40:00.000Z added at c8c8c8c8c8c8"],
+      "status": "queued"
+    },
+    {
+      "slug": "docs-pass", "id": "PROCESS-DOCS", "phase": "controller", "kind": "controller", "title": "Docs pass",
+      "branch": "agent/docs-pass", "base": "develop", "head": "c9c9c9c9c9c9",
+      "readyAt": "2026-11-19T11:45:00.000Z", "updatedAt": "2026-11-19T11:45:00.000Z",
+      "counted": true, "reverts": [],
+      "history": ["2026-11-19T11:45:00.000Z added at c9c9c9c9c9c9"],
+      "status": "queued"
+    }
+  ],
+  "releases": [
+    {
+      "version": "0.3.1", "branch": "release/0.3.1", "base": "release/0.3.0", "gate": false, "capacity": 3, "reserve": null,
+      "status": "fixing", "openedAt": "2026-11-19T09:00:00.000Z", "closedAt": "2026-11-19T11:00:00.000Z",
+      "entries": [
+        { "type": "entry", "slug": "s03-task-02", "id": "S03-TASK-02", "kind": "core", "counted": true, "sha": "d3d3d3d3d3d3", "at": "2026-11-19T09:10:00.000Z" },
+        { "type": "entry", "slug": "s05-task-02", "id": "S05-TASK-02", "kind": "core", "counted": true, "sha": "d4d4d4d4d4d4", "at": "2026-11-19T09:30:00.000Z" },
+        { "type": "entry", "slug": "s12-task-02", "id": "S12-TASK-02", "kind": "core", "counted": true, "sha": "d5d5d5d5d5d5", "at": "2026-11-19T10:00:00.000Z" },
+        { "type": "entry", "slug": "s02-task-06", "id": "S02-TASK-06", "kind": "core", "counted": true, "sha": "d6d6d6d6d6d6", "at": "2026-11-19T10:40:00.000Z" }
+      ],
+      "fixRounds": { "s12-task-02": 2 },
+      "failures": [
+        { "reason": "ui:tour timed out on build-host-77", "log": "C:/runner/releases/0.3.1/check-run1.log", "entries": ["s12-task-02"], "at": "2026-11-19T11:30:00.000Z", "stage": "check" }
+      ],
+      "runs": [
+        { "n": 1, "sha": "f1f1f1f1f1f1", "mode": "release", "owner": "merger-20261119110400", "startedAt": "2026-11-19T11:05:00.000Z", "result": "failed", "reason": "ui:tour timed out on build-host-77", "log": "C:/runner/releases/0.3.1/check-run1.log", "finishedAt": "2026-11-19T11:30:00.000Z" }
+      ],
+      "movedOut": [{ "slug": "s03-task-02", "integrationSha": "d3d3d3d3d3d3", "revertSha": "r3r3r3r3r3r3" }],
+      "openFailure": null
+    },
+    {
+      "version": "0.3.0", "branch": "release/0.3.0", "base": "develop", "gate": false, "capacity": 10, "reserve": ["s03-task-01", "s04-task-02"],
+      "status": "passed", "openedAt": "2026-11-19T07:45:00.000Z", "closedAt": "2026-11-19T09:00:00.000Z",
+      "entries": [
+        { "type": "entry", "slug": "s03-task-01", "id": "S03-TASK-01", "kind": "core", "counted": true, "sha": "d1d1d1d1d1d1", "at": "2026-11-19T08:10:00.000Z" },
+        { "type": "entry", "slug": "s04-task-02", "id": "S04-TASK-02", "kind": "core", "counted": true, "sha": "d2d2d2d2d2d2", "at": "2026-11-19T08:20:00.000Z" },
+        { "type": "release-fix", "slug": "fixes/0.3.0#1", "kind": "release-fix", "counted": false, "sha": "f0f0f0f0f0f0", "fixes": ["s04-task-02"], "round": 1, "note": "round 1: the verify:full failed fix", "at": "2026-11-19T09:50:00.000Z" }
+      ],
+      "fixRounds": { "s04-task-02": 1 },
+      "failures": [
+        { "reason": "check 1: verify:full failed for s04-task-02, see C:/Users/fixture-user/secret-notes.txt", "log": "C:/runner/releases/0.3.0/check-run1.log", "entries": ["s04-task-02"], "at": "2026-11-19T09:40:00.000Z", "stage": "check" }
+      ],
+      "runs": [
+        { "n": 1, "sha": "a0a0a0a0a0a0", "mode": "release", "owner": "merger-20261119090400", "startedAt": "2026-11-19T09:05:00.000Z", "result": "failed", "reason": "check 1: verify:full failed for s04-task-02, see C:/Users/fixture-user/secret-notes.txt", "log": "C:/runner/releases/0.3.0/check-run1.log", "finishedAt": "2026-11-19T09:40:00.000Z" },
+        { "n": 2, "sha": "a1a1a1a1a1a1", "mode": "release", "owner": "merger-20261119100400", "startedAt": "2026-11-19T10:05:00.000Z", "result": "passed", "finishedAt": "2026-11-19T10:25:00.000Z", "seconds": 1200 }
+      ],
+      "movedOut": [],
+      "openFailure": null,
+      "passedAt": "2026-11-19T10:30:00.000Z", "verifiedSha": "a1a1a1a1a1a1", "developSha": "e1e1e1e1", "tag": "v0.3.0", "pushed": true
+    },
+    {
+      "version": "0.3.2", "branch": "release/0.3.2", "base": "release/0.3.1", "gate": false, "capacity": 10, "reserve": null,
+      "status": "open", "openedAt": "2026-11-19T11:00:00.000Z",
+      "entries": [
+        { "type": "entry", "slug": "s05-task-01", "id": "S05-TASK-01", "kind": "core", "counted": true, "sha": "d7d7d7d7d7d7", "at": "2026-11-19T11:20:00.000Z" }
+      ],
+      "fixRounds": {},
+      "failures": [
+        { "reason": "merge conflict in compose.yaml", "log": "", "entries": ["s12-task-03"], "at": "2026-11-19T11:50:00.000Z", "stage": "integrate" }
+      ],
+      "runs": [],
+      "movedOut": [],
+      "openFailure": { "reason": "merge conflict in compose.yaml", "log": "", "entries": ["s12-task-03"], "at": "2026-11-19T11:50:00.000Z", "stage": "integrate" }
+    }
+  ],
+  "legacyBatches": [
+    { "n": 1, "slugs": ["s01-task-01"], "gate": false, "max": 4, "startedAt": "2026-11-19T05:30:00.000Z", "status": "passed", "develop": "aaa0000", "owner": "merger-20261119052900", "finishedAt": "2026-11-19T06:00:00.000Z", "developAfter": "bbb2222", "verifySeconds": 1500 }
+  ]
+}
