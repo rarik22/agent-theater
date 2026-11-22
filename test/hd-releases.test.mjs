@@ -113,3 +113,38 @@ test('a release state renders: the window, the counter, the plate; a moved-out p
   step(w, 0.1);
   assert.ok(![...w.parcels.values()].some((p) => p.slug === 'a2' && p.mode === 'window'));
 });
+
+test('the workflows alone: the plate says what the machine does, the counter shows no count', () => {
+  const rel = { version: null, status: 'running', activity: 'checking', counted: null, capacity: null, fixRounds: 0, openFailure: false, next: null };
+  assert.equal(releasePlate(rel, 400).line, 'MERGE CHECKING');
+  assert.equal(releasePlate(rel, 50).line, 'CHECKING');
+  assert.equal(releasePlate(rel, 40).line, 'CHECK');
+  const machine = { version: null, status: 'running', activity: 'working', counted: null, capacity: null, entries: [], since: T('11:50') };
+  const w = createWorld({ aspect: '16:9' });
+  applyState(w, trainState({ machine, releases: [machine] }), { first: true });
+  for (let i = 0; i < 20; i += 1) step(w, 1 / 30);
+  assert.ok(renderFrame(createRenderer(), w).w > 0);
+  assert.deepEqual([w.release.version, w.release.activity, w.release.counted], [null, 'working', null]);
+  assert.equal(mergeState({ release: w.release }), 'working');
+});
+
+test('a finished run joins the queue column when the team has a queue, else flows into the vault', () => {
+  const done = { id: 'done:API:1', at: T('12:00'), type: 'done', job: null, lane: 'API', text: 'API done' };
+  const run = (extra) => {
+    const w = createWorld({ aspect: '16:9' });
+    const base = { ...stateWith({ lanes: [lane('API', NEUTRAL)] }), ...extra };
+    applyState(w, base, { first: true });
+    step(w, 0.2);
+    applyState(w, { ...base, events: [done] });
+    step(w, 0.05);
+    return w;
+  };
+  const queued = run({ sources: { queue: 'ok' } });
+  const p = [...queued.parcels.values()].find((x) => x.slug === 'run:done:API:1');
+  assert.equal(p.mode, 'joining');
+  assert.equal(queued.flows.length, 0);
+  for (let i = 0; i < 300; i += 1) step(queued, 1 / 30);
+  assert.ok(![...queued.parcels.values()].some((x) => x.slug === 'run:done:API:1'), 'it joins the column and leaves');
+  const plain = run({});
+  assert.equal([...plain.parcels.values()].find((x) => x.slug === 'run:done:API:1').mode, 'merging');
+});

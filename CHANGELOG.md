@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.0 (2026-11-22)
+
+The flow comes from the workflows themselves; a team's runner files only add detail.
+
+- Each workflow's phases say what it does: one that builds (implement, code, build, set up) gets a lane
+  per run with its phases as stations; one that only takes work to the branch (integrate, verify,
+  merge, release, ship, deploy, publish, fix) works the merge machine. Its runs take no lane and no run
+  counter, its merger stands at the machine, its fixer and reviewer on the dock.
+- The machine follows the live merge run's phase (integrating, checking, merging, fixing, working),
+  for the release the run names (a version in its subject or labels), else the one that phase can act
+  on. With no queue file that run alone makes the machine's release.
+- `pipeline.mergeWorkflows` / `pipeline.jobWorkflows` (names or /regex/) settle any workflow the
+  phases leave in doubt.
+- Runner conventions are preset data: the queue's history wording (`rules.queue.history`), status
+  names (`rules.queue.status`, `releaseStatus`) and lock holders (`rules.owners`), with generic
+  defaults (`<role>-<version>`, `<role>-<run stamp>`).
+- The runs model uses a progress file for the job counters when one is configured, takes each queue
+  entry's lane from the run that built its job, names the vault after the configured branch, and sends
+  a finished run's work to the queue column (not the vault) when the team has a merge queue.
+- Replay plays the merge runs frame by frame.
+
 ## 0.2.0 (2026-11-22)
 
 Release trains: the merge machine follows a runner that merges in releases instead of batches,

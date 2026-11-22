@@ -82,7 +82,9 @@ one: its integrated entries sit in the machine, entries already integrated into 
 lowest on the queue column, then the queued ones. Git shows one merge per release (`Merge branch
 'release/<v>' into <branch>`); the theater counts each job the release carried as merged then. Reasons
 appear only in the private view, redacted. A read that catches the file half-written keeps the last
-good copy for up to two minutes.
+good copy for up to two minutes. The status names and history wording above are defaults: a preset maps another
+runner's (`rules.queue`), and reads its lock holders (`rules.owners`); see [PRESETS.md](PRESETS.md).
+The queue only adds detail: what the machine does comes first from the merge workflow's live run.
 
 ### `sources.locks`
 

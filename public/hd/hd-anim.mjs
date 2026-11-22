@@ -97,7 +97,7 @@ export function pulsesAt(kind, t, seed = 0, travel = 1.6) {
  * Merge machine state from the scene: 'pass' right after a merge went through, 'fail' right after a
  * bounce, 'working' while a batch runs or parcels sit in its window, else 'idle'.
  */
-const RELEASE_WORK = new Set(['integrating', 'checking', 'merging']);
+const RELEASE_WORK = new Set(['integrating', 'checking', 'merging', 'working']);
 
 /**
  * The merge machine's state: fail (a bounce just landed), pass (a merge just landed), working, fixing

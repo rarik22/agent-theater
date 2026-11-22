@@ -24,7 +24,7 @@ const LANE_STATUS = ['running', 'completed', 'killed', 'waiting', 'idle'];
 // merge batches: ready, batched, bounced, held; release trains: queued, integrated, moved-out
 const QUEUE_STATUS = ['ready', 'batched', 'merged', 'bounced', 'held', 'dropped', 'queued', 'integrated', 'moved-out'];
 const VERSION = /^\d{1,4}\.\d{1,4}\.\d{1,4}(?:-[a-z0-9.]{1,12})?$/i;
-const RELEASE_ACTIVITY = ['merging', 'checking', 'integrating', 'fixing', 'passed', 'open', 'verifying'];
+const RELEASE_ACTIVITY = ['merging', 'checking', 'integrating', 'fixing', 'working', 'passed', 'open', 'verifying', 'running'];
 /** Order two release versions (numeric parts first). */
 export function compareVersions(a, b) {
   const pa = String(a ?? '').split(/[.-]/);
@@ -212,17 +212,25 @@ export function placeAgents(agents, rows) {
   return out;
 }
 
-/** One release of the state, checked: version, status, what the runner does with it, counts. */
+/**
+ * One release of the state, checked: version, status, what the runner does with it, counts. A release
+ * the workflows alone tell of (no queue file) may have no version and no counts (null).
+ */
 function releaseOf(r) {
-  if (!r || typeof r !== 'object' || !VERSION.test(String(r.version ?? ''))) return null;
-  const whole = (v, d = 0) => (Number.isInteger(v) && v >= 0 ? Math.min(v, 999) : d);
+  if (!r || typeof r !== 'object') return null;
+  const version = VERSION.test(String(r.version ?? '')) ? String(r.version) : null;
+  if (!version && !RELEASE_ACTIVITY.includes(r.activity)) return null;
+  const whole = (v) => (Number.isInteger(v) && v >= 0 ? Math.min(v, 999) : null);
   const started = r.check && r.check.result === 'running' ? Date.parse(r.check.startedAt) : NaN;
+  const since = Date.parse(r.since);
+  const capacity = whole(r.capacity);
   return {
-    version: String(r.version),
+    version,
     status: typeof r.status === 'string' && /^[a-z-]{1,16}$/.test(r.status) ? r.status : 'open',
     activity: RELEASE_ACTIVITY.includes(r.activity) ? r.activity : 'open',
     counted: whole(r.counted),
-    capacity: Math.max(1, whole(r.capacity, 10)),
+    capacity: capacity === null ? null : Math.max(1, capacity),
+    sinceMs: Number.isFinite(since) ? since : null,
     fixRounds: whole(r.fixRounds),
     openFailure: Boolean(r.openFailure),
     checkStartedMs: Number.isFinite(started) ? started : null,
@@ -238,7 +246,7 @@ export function releaseScene(state) {
   const machine = releaseOf(state?.queue?.release);
   if (!machine) return null;
   const list = Array.isArray(state.queue.releases) ? state.queue.releases.map(releaseOf).filter(Boolean) : [];
-  const next = list.filter((r) => r.status !== 'passed' && compareVersions(r.version, machine.version) > 0).sort((a, b) => compareVersions(a.version, b.version))[0] || null;
+  const next = machine.version ? list.filter((r) => r.version && r.status !== 'passed' && compareVersions(r.version, machine.version) > 0).sort((a, b) => compareVersions(a.version, b.version))[0] || null : null;
   return { ...machine, next };
 }
 
@@ -271,9 +279,9 @@ export function queueScene(state) {
   if (release) {
     const order = new Map(release.entries.map((s, i) => [s, i]));
     const at = (e) => order.get(e.slug) ?? Number.MAX_SAFE_INTEGER;
-    const inMachine = items.filter((e) => e.status === 'integrated' && e.release === release.version).sort((a, b) => at(a) - at(b) || a.integratedAt - b.integratedAt || a.slug.localeCompare(b.slug));
+    const inMachine = items.filter((e) => e.status === 'integrated' && (e.release === release.version || (!release.version && !e.release))).sort((a, b) => at(a) - at(b) || a.integratedAt - b.integratedAt || a.slug.localeCompare(b.slug));
     const window = inMachine.slice(-WINDOW_SLOTS).map((e) => ({ slug: e.slug, job: e.job, lane: e.lane, status: 'integrated' }));
-    const later = items.filter((e) => e.status === 'integrated' && e.release !== release.version).sort((a, b) => compareVersions(a.release, b.release) || a.integratedAt - b.integratedAt || a.slug.localeCompare(b.slug));
+    const later = items.filter((e) => e.status === 'integrated' && !inMachine.includes(e)).sort((a, b) => compareVersions(a.release, b.release) || a.integratedAt - b.integratedAt || a.slug.localeCompare(b.slug));
     const waiting = items.filter((e) => e.status === 'queued' || e.status === 'ready' || e.status === 'held').sort(byQueue);
     const belt = [...later.map((e) => ({ ...e, integrated: true })), ...waiting];
     return { belt, window, bounced, byStatus, batchRunning: false, release, inRelease: inMachine.length };
@@ -330,6 +338,8 @@ export function stageEvents(state) {
     .map((e) => ({ id: e.id, type: e.type, slug: safeSlug(e.slug), job: safeKey(e.job), lane: isLaneId(e.lane) ? e.lane : null }));
 }
 
+const entries = (state) => (Array.isArray(state?.queue?.entries) ? state.queue.entries : []);
+
 /** The whole scene for one state; `maxRows` caps the lane rows for the aspect. */
 export function mapState(state, maxRows = 8) {
   const raw = Array.isArray(state?.agents) ? state.agents : [];
@@ -346,6 +356,8 @@ export function mapState(state, maxRows = 8) {
     ...podScene(state),
     events: stageEvents(state),
     sample: state?.sample === true,
+    // the team has a merge queue: a finished run's work joins it instead of going straight to the vault
+    queueSource: state?.sources?.queue === 'ok' || Boolean(state?.queue?.release) || entries(state).length > 0,
     public: state?.public !== false,
     replay: state?.mode === 'replay',
     agentsKnown: Array.isArray(state?.agents),
@@ -365,6 +377,6 @@ export function describeScene(scene) {
   const r = scene.rows.length ? ` ${scene.rows.length} ${scene.rows.length === 1 ? 'lane' : 'lanes'} on stage.` : '';
   const q = scene.belt.length ? ` ${scene.belt.length} waiting for merge.` : '';
   const rel = scene.release;
-  const b = rel ? ` Release ${rel.version} ${rel.activity}, ${rel.counted} of ${rel.capacity}.` : scene.window.length ? ` Merge batch of ${scene.window.length} running.` : '';
+  const b = rel ? ` ${rel.version ? `Release ${rel.version}` : 'Merge machine'} ${rel.activity}${rel.counted !== null && rel.capacity !== null ? `, ${rel.counted} of ${rel.capacity}` : ''}.` : scene.window.length ? ` Merge batch of ${scene.window.length} running.` : '';
   return `${lead}${r}${q}${b}${scene.sample ? ' Sample data.' : ''}`;
 }

@@ -651,6 +651,8 @@ export const YARD_LABELS = Object.freeze({ test: 'TEST', merge: 'MERGE', develop
 // the machine plate's words for what the runner does with the release, long and short
 const RELEASE_WORDS = {
   merging: ['MERGING', 'MERGE'],
+  working: ['WORKING', 'WORK'],
+  running: ['RUNNING', 'RUN'],
   checking: ['CHECKING', 'CHECK'],
   integrating: ['INTEGRATING', 'INTEG'],
   fixing: ['FIXING', 'FIX'],
@@ -666,17 +668,18 @@ const RELEASE_WORDS = {
  */
 export function releasePlate(rel, maxW, ts = 1) {
   const [long, short] = RELEASE_WORDS[rel.activity] || [String(rel.activity || '').toUpperCase(), String(rel.activity || '').toUpperCase()];
-  const options = [[`REL ${rel.version}`, long], [rel.version, long], [rel.version, short], ['', rel.version]];
+  // without a version (the workflows alone name none) the plate says what the machine does
+  const options = rel.version ? [[`REL ${rel.version}`, long], [rel.version, long], [rel.version, short], ['', rel.version]] : [['MERGE', long], ['', long], ['', short]];
   const line = ([h, w]) => fontText(h ? `${h} ${w}` : w);
   const pick = options.find((o) => textWidth(line(o), 1, ts) <= maxW) || options[options.length - 1];
   const notes = [];
   if (rel.openFailure) notes.push('open failure');
   if (rel.fixRounds > 0) notes.push(`fix rounds ${rel.fixRounds}`);
-  if (rel.next) notes.push(`next ${rel.next.version} ${rel.next.activity === 'integrating' ? 'integrating' : rel.next.status} ${rel.next.counted}/${rel.next.capacity}`);
+  if (rel.next) notes.push(`next ${rel.next.version} ${rel.next.activity === 'integrating' ? 'integrating' : rel.next.status}${rel.next.counted !== null && rel.next.capacity !== null ? ` ${rel.next.counted}/${rel.next.capacity}` : ''}`);
   return { line: line(pick), word: fontText(pick[1]), notes: notes.join(' · ') };
 }
 
-const RELEASE_COLOUR = { merging: 'cyan', checking: 'cyan', integrating: 'cyan', fixing: 'red', passed: 'mint', verifying: 'amber', open: 'steel' };
+const RELEASE_COLOUR = { merging: 'cyan', checking: 'cyan', integrating: 'cyan', working: 'cyan', running: 'cyan', fixing: 'red', passed: 'mint', verifying: 'amber', open: 'steel' };
 
 function drawReleasePlate(f, L, rel, { t = 0, calm = false } = {}) {
   const ts = L.ts;
@@ -867,8 +870,9 @@ export function renderFrame(rd, world, opts = {}) {
       hline(f, x + 11, y + 1, 4, R.mint[4]);
     }
   }
-  const progress = rel ? (rel.activity === 'checking' ? world.needle : Math.min(1, rel.counted / rel.capacity)) : batchProgress(world.batchStartedMs, nowMs);
-  drawMergeDynamic(f, L, { state: ms, progress, t, calm, count: scene ? scene.window.length : 0, gearAng: world.gearAng, needle: world.needle, ease: world.mergeEase, counter: rel ? `${Math.min(rel.counted, 99)}/${Math.min(rel.capacity, 99)}` : null, fill: rel ? Math.min(1, rel.counted / rel.capacity) : null });
+  const counts = rel && rel.counted !== null && rel.capacity !== null;
+  const progress = rel ? (rel.activity === 'checking' || !counts ? world.needle : Math.min(1, rel.counted / rel.capacity)) : batchProgress(world.batchStartedMs, nowMs);
+  drawMergeDynamic(f, L, { state: ms, progress, t, calm, count: scene ? scene.window.length : 0, gearAng: world.gearAng, needle: world.needle, ease: world.mergeEase, counter: counts ? `${Math.min(rel.counted, 99)}/${Math.min(rel.capacity, 99)}` : null, fill: counts ? Math.min(1, rel.counted / rel.capacity) : null });
   if (rel) drawReleasePlate(f, L, rel, { t, calm });
   // the merger at the lever pedestal
   const mergers = agents.filter((a) => a.place === 'merge' && a.state !== 'out');

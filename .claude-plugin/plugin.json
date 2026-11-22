@@ -1,7 +1,7 @@
 {
   "name": "agent-theater",
   "displayName": "Agent Theater",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A live pixel-art stage of your AI agents at work: a status line entry, /theater, and a compact pane of agents and lanes beside the chat. Works with Claude Code.",
   "author": { "name": "tarqmamdouh", "url": "https://github.com/tarqmamdouh" },
   "homepage": "https://github.com/tarqmamdouh/agent-theater",

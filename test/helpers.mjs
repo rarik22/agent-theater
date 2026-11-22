@@ -143,13 +143,14 @@ export function assertStateShape(state) {
   if (state.queue.releases !== undefined) {
     assert.ok(Array.isArray(state.queue.releases));
     for (const r of state.queue.releases) {
-      assert.match(r.version, /^\d+\.\d+\.\d+/);
-      assert.ok(['merging', 'checking', 'integrating', 'fixing', 'passed', 'open', 'verifying'].includes(r.activity), `activity ${r.activity}`);
-      assert.ok(Number.isInteger(r.counted) && Number.isInteger(r.capacity) && r.capacity > 0);
+      // a release the workflows alone tell of may name no version and has no counts
+      assert.ok(r.version === null || /^\d+\.\d+\.\d+/.test(r.version), `version ${r.version}`);
+      assert.ok(['merging', 'checking', 'integrating', 'fixing', 'working', 'passed', 'open', 'verifying'].includes(r.activity), `activity ${r.activity}`);
+      assert.ok((r.counted === null && r.capacity === null) || (Number.isInteger(r.counted) && Number.isInteger(r.capacity) && r.capacity > 0), 'counts');
       assert.ok(Array.isArray(r.entries) && r.entries.every((s) => typeof s === 'string'));
       assert.ok(r.openFailure === null || Array.isArray(r.openFailure.entries));
     }
-    assert.ok(state.queue.release === null || state.queue.releases.some((r) => r.version === state.queue.release.version), 'the machine release is listed');
+    assert.ok(state.queue.release === null || state.queue.releases.some((r) => r.version === state.queue.release.version && r.activity === state.queue.release.activity), 'the machine release is listed');
   }
   assert.ok(Array.isArray(state.slots));
   for (const s of state.slots) {

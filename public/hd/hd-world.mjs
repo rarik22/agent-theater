@@ -243,6 +243,17 @@ function launchPlane(world, lane) {
 function finishRun(world, ev) {
   const L = world.layout;
   const row = ev.lane ? L.rowById.get(ev.lane) : null;
+  if (world.scene?.queueSource) {
+    // the team merges through a queue: the run's work rides to the queue column (the queue file then
+    // lists it on the belt) instead of straight into the vault
+    if (!row || world.calm) return;
+    const P = parcelPaths(L);
+    const exit = laneExit(L, row);
+    const p = { slug: `run:${ev.id}`, job: ev.job, lane: ev.lane, x: exit.x, y: exit.y, path: [], mode: 'joining', speed: SPEED.belt };
+    setPath(p, [{ x: P.qx, y: exit.y }], SPEED.belt);
+    world.parcels.set(p.slug, p);
+    return;
+  }
   noteMerge(world);
   if (world.calm) {
     world.vaultIntake = world.t;
@@ -332,7 +343,7 @@ function syncParcels(world, scene, snap) {
     Object.assign(p, { mode: 'window', tx: slot.x, ty: slot.y, lane: e.lane || p.lane, job: e.job || p.job });
   });
   for (const p of [...world.parcels.values()]) {
-    if (p.mode === 'merging' || onBelt.has(p.slug) || inWin.has(p.slug)) continue;
+    if (p.mode === 'merging' || p.mode === 'joining' || onBelt.has(p.slug) || inWin.has(p.slug)) continue;
     const st = scene.byStatus.get(p.slug)?.status;
     if (snap) world.parcels.delete(p.slug);
     else if (st === 'merged') startMerge(world, p);
@@ -519,7 +530,10 @@ function easeMerge(world, dt) {
   const nowMs = world.nowMs + (world.t - world.nowAt) * 1000;
   const rel = sc?.release || null;
   // the gauge: a batch's running time; a release check's time against its nominal two hours, else how full the release is
-  const reading = ms === 'pass' ? 1 : rel ? (rel.activity === 'checking' && rel.checkStartedMs !== null ? batchProgress(rel.checkStartedMs, nowMs, CHECK_NOMINAL_MS) : Math.min(1, rel.counted / rel.capacity)) : batchProgress(world.batchStartedMs, nowMs);
+  const counts = rel && rel.counted !== null && rel.capacity !== null;
+  const checkFrom = rel ? rel.checkStartedMs ?? rel.sinceMs : null;
+  // (the workflows alone give no counts: the phase's time against half an hour)
+  const reading = ms === 'pass' ? 1 : rel ? (rel.activity === 'checking' && checkFrom !== null ? batchProgress(checkFrom, nowMs, CHECK_NOMINAL_MS) : counts ? Math.min(1, rel.counted / rel.capacity) : batchProgress(rel.sinceMs, nowMs, 1_800_000)) : batchProgress(world.batchStartedMs, nowMs);
   world.needle += (reading - world.needle) * k(0.35);
   world.mergeEase += ((working ? 1 : 0) - world.mergeEase) * k(0.4);
 }
@@ -555,6 +569,7 @@ export function step(world, dt, speed = 1) {
       world.parcels.delete(p.slug);
       world.flows.push({ d: 0 });
     }
+    if (done && p.mode === 'joining') world.parcels.delete(p.slug);
   }
   const pipeLen = pathLength(L.pipe);
   for (const fl of world.flows) {

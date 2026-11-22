@@ -43,7 +43,7 @@ Query flags on every `GET` endpoint:
 ```
 
 - **project**: `done`/`total` is the controller's main counter: workflow runs completed of those
-  started in the last `countHours` (runs model), a preset's job totals (jobs model), or the last
+  started in the last `countHours` (runs model; merge workflows' runs not counted), a progress file's job totals (jobs model, or the runs model with a progress file), or the last
   `progress` event of the event API. `features` is the second counter (agents finished of started, or
   a preset's tracked features). `batch` is the third (runs running now, or the running merge batch).
   With release trains, `release` is the version on the merge machine and the controller shows it in
@@ -74,9 +74,12 @@ Query flags on every `GET` endpoint:
   merged and never queued), `merged` (its release reached the branch: `release`, `mergedAt`),
   `moved-out` (taken out of its release, back in its lane) or `dropped`. Merged and dropped entries
   stay listed for `recentQueueMinutes`.
-- **queue.releases** (release trains only): the unfinished releases and those that passed in the last
-  `recentQueueMinutes`, in version order. `queue.release` is the one on the merge machine: the oldest
-  unfinished release (releases reach the branch in order), else the one that just passed.
+- **queue.releases** (whenever the merge machine works on releases): the unfinished releases and those
+  that passed in the last `recentQueueMinutes`, in version order. `queue.release` is the one on the
+  merge machine: the oldest unfinished release (releases reach the branch in order), else the one that
+  just passed. A merge workflow's live run (see **agents**) is enough on its own: without a queue file
+  the list holds one release made from that run, `status: "running"`, its `version` from the run's
+  subject or labels (or null), `counted` and `capacity` null, and `since` and `phase` its current phase.
 
   ```text
   { version, status: "open"|"verifying"|"fixing"|"passed", activity, gate, capacity, counted,
@@ -85,17 +88,23 @@ Query flags on every `GET` endpoint:
     openedAt, closedAt, passedAt, lastIntegratedAt, tag }
   ```
 
-  `activity` is what the runner does with it now, from its record and the lock owners: `merging`
+  `activity` is what the runner does with it now. The live merge workflow's phase says it first
+  (integrate: `integrating`; verify, check, test: `checking`; merge, release, ship, publish, tag:
+  `merging`; fix, and a review after a fix: `fixing`; anything else: `working`), for the release the
+  run names, else the one that phase can act on (an integration the open release, a fix the one that is
+  fixing, a check or a merge the oldest unfinished one). The record and the lock owners add: `merging`
   (the branch's merge lock is held, for the oldest unfinished release), `checking` (a check run is
   running, or `release-<v>` holds the exclusive hold or every test booth), `integrating` (a merger
   holds the `release-<v>` lock), `fixing` (status fixing, or a fixer holds its lock or a booth), else
   its status (`open`, `verifying`, `passed`). `counted` counts its counted entries (`entries` lists
   them in integration order, without those moved out); fix merges (`fixes`) never count. `fixRounds` is
   the sum of its per-entry fix rounds. `reason` fields are only in the private view, redacted. In replay
-  frames no lock owners are known, so `activity` comes from the record alone, and `fixRounds` counts
+  frames no lock owners are known, so `activity` comes from the merge runs and the record, and `fixRounds` counts
   the fix merges made by then.
-- **agents** with release trains: the runner starts a merger run per step, so between runs no merger
-  is live. While releases have work (an unfinished release, or jobs queued for one) the state keeps a
+- **agents** of merge workflows (a workflow whose phases take work to the branch and build nothing,
+  or one named in `pipeline.mergeWorkflows`): their runs take no lane; the merger (integrate, verify,
+  merge phases) stands at the machine with `place: "merge"`, a fixer or reviewer on the dock. Job
+  workflows' runs are the lanes, their phases the stations. Between merge runs no merger is live; while releases have work (an unfinished release, or jobs queued for one) the state keeps a
   merger at the machine: `id: "release-merger"`, `idle: true`, `place: "merge"`, its `say` what it
   waits for ("waiting for the fix", "waiting for jobs (7/10)"). `GET /api/agent?id=release-merger`
   returns the releases' timeline as its log.

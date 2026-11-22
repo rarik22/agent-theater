@@ -217,8 +217,8 @@ always walks.
       Pushes send a packet up the line to the remote. Background tests and live checks light up the
       test pods with the colour of the lane that started them.
       <br><br>
-      With a runner that merges in releases, the machine works one release at a time, in version
-      order. Its plate says which release and what is happening to it (integrating, checking, fixing,
+      With a merge workflow (one whose phases integrate, verify, merge or release), the machine works
+      one release at a time, in version order, and shows what that workflow's current phase does. Its plate says which release and what is happening to it (integrating, checking, fixing,
       merging), and the counter shows how full it is (7/10). Jobs already promised to the next
       release ride lowest on the column, marked with a green seal. Between runs the merger waits by
       the lever and says what for.
@@ -323,9 +323,19 @@ lanes / queue / locks / progress files, git log     ── optional runner sourc
   read-only `git log`, and only when you name a repository. Readers shrug off missing files and lines
   they can't parse; the exact shapes are in [docs/SOURCES.md](docs/SOURCES.md).
 
-Teams with a pipeline of their own can swap the lane model through a preset: lanes as the team's own
-pipeline lanes, fixed stations, its own counters (`JOBS 82/587`, for example), a merge queue, test-booth
-locks and job ids. See [docs/PRESETS.md](docs/PRESETS.md). The HTTP API is in [docs/API.md](docs/API.md).
+- **How it tells the flow.** Each workflow says what it does through its own phases. A workflow that
+  builds things (implement, code, build, set up) gets a lane per run, and its phases are the stations.
+  A workflow whose phases only take finished work to the branch (integrate, verify, merge, release,
+  ship, deploy, publish, fix) works the merge machine instead: its merger stands at the lever, the
+  machine shows what its current phase is doing (integrating, checking, fixing, merging), and a version
+  in its labels names the release. Nothing about your team is built in; `pipeline.mergeWorkflows` and
+  `pipeline.jobWorkflows` settle any workflow the phases leave in doubt.
+
+A team's own runner files add detail on top: a progress file for the job counters (`JOBS 82/587`), a
+merge queue for parcels, release versions and counts, lock files for the test booths and the release
+locks, and git for what reached the branch. Their conventions (status names, history wording, lock
+owners) are data in a preset, and the lanes can follow the team's pipeline instead of the runs. See
+[docs/PRESETS.md](docs/PRESETS.md). The HTTP API is in [docs/API.md](docs/API.md).
 
 ## Privacy
 

@@ -21,8 +21,12 @@ function touch(path, at) {
   utimesSync(path, t, t);
 }
 
-/** Write the home into a temp dir; returns { dir, home, cfg (runs model), cleanup }. */
-export function setupClaudeHome(overrides = {}) {
+/**
+ * Write the home into a temp dir; returns { dir, home, cfg (runs model), cleanup }. `mergeRuns` adds a
+ * merge workflow ("release-train": Integrate > Verify > Fix > Review > Merge fix): a run that finished
+ * at 11:00, and a running one verifying release 2.4.0.
+ */
+export function setupClaudeHome(overrides = {}, { mergeRuns = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'agent-theater-home-'));
   const home = join(dir, '.claude');
   const session = join(home, 'projects', PROJECT, SESSION);
@@ -68,6 +72,16 @@ export function setupClaudeHome(overrides = {}) {
   // 5. a run that ended yesterday: outside every window
   run('wf_old-e5', [started('e5old', 'implement', 'Implement'), done('e5old')], [['e5old', [use('09:00:00', 'u12', 'Edit', { file_path: 'x' })], ms('09:30:00', '18')]]);
   writeFileSync(join(records, 'wf_old-e5.json'), JSON.stringify({ runId: 'wf_old-e5', workflowName: 'old', status: 'completed', startTime: ms('09:00:00', '18'), durationMs: 30 * 60_000, phases: [{ title: 'Implement' }] }));
+
+  if (mergeRuns) {
+    const releaseScript = (id) => writeFileSync(join(records, 'scripts', `release-train-${id}.js`), "export const meta = {\n  name: 'release-train',\n  phases: [{ title: 'Integrate' }, { title: 'Verify' }, { title: 'Fix' }, { title: 'Review' }, { title: 'Merge fix' }],\n}\n");
+    // 6. a merge run that integrated and finished at 11:00 (record: completed)
+    run('wf_rel-f6', [started('f6int', 'integrate', 'Integrate'), done('f6int')], [['f6int', [use('10:40:00', 'u14', 'Bash', { command: 'git merge --no-ff agent/cart' })], ms('11:00:00')]]);
+    writeFileSync(join(records, 'wf_rel-f6.json'), JSON.stringify({ runId: 'wf_rel-f6', workflowName: 'release-train', status: 'completed', startTime: ms('10:40:00'), durationMs: 20 * 60_000, phases: [{ title: 'Integrate' }, { title: 'Verify' }, { title: 'Fix' }, { title: 'Review' }, { title: 'Merge fix' }], args: { mode: 'integrate' } }));
+    // 7. a merge run verifying release 2.4.0 now: its check runs in the background
+    run('wf_rel-g7', [started('g7ver', 'verify 2.4.0', 'Verify')], [['g7ver', [use('11:50:00', 'u15', 'Bash', { command: 'git checkout release/2.4.0' }), use('11:59:30', 'u16', 'Bash', { command: 'pnpm run test:e2e', run_in_background: true }), result('11:59:31', 'u16', 'Command running in background with ID: b2')], ms('11:59:31')]]);
+    releaseScript('wf_rel-g7');
+  }
 
   // the session transcript: the launch of run 2 (its Workflow tool use and result)
   const script = "export const meta = { name: 'bugfix', phases: [{ title: 'Reproduce', detail: 'see [1]' }, { title: 'Fix' }, { title: 'Verify' }] }\nawait agent('x')";
