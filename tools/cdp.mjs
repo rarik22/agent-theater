@@ -6,10 +6,20 @@ import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+// CHROME_PATH wins; otherwise the usual install place for this platform.
+const CHROME_CANDIDATES = {
+  win32: ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'],
+  darwin: ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/Applications/Chromium.app/Contents/MacOS/Chromium'],
+  linux: ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/opt/pw-browsers/chromium', '/snap/bin/chromium'],
+};
+const CHROME = process.env.CHROME_PATH || (CHROME_CANDIDATES[process.platform] || CHROME_CANDIDATES.linux).find((p) => existsSync(p)) || (CHROME_CANDIDATES[process.platform] || CHROME_CANDIDATES.linux)[0];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function killProfile(tag) {
+  if (process.platform !== 'win32') {
+    spawnSync('pkill', ['-KILL', '-f', tag], { stdio: 'ignore' });
+    return;
+  }
   spawnSync('powershell.exe', ['-NoProfile', '-Command', `Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" | Where-Object { $_.CommandLine -like '*${tag}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: 'ignore' });
 }
 
@@ -19,7 +29,9 @@ export async function launchChrome({ root, width = 1920, height = 1080, headless
   mkdirSync(profile, { recursive: true });
   // headless for QA renders; headed (a normal window) to see the page as a viewer's Chrome runs it
   const mode = headless ? ['--headless=new', '--disable-gpu', '--hide-scrollbars'] : ['--disable-features=CalculateNativeWinOcclusion', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--window-position=40,40'];
-  const args = [...mode, '--no-first-run', '--no-default-browser-check', '--force-device-scale-factor=1', '--autoplay-policy=no-user-gesture-required', `--user-data-dir=${profile}`, `--window-size=${width},${height}`, '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=0', 'about:blank'];
+  // root has no user namespaces for Chrome's sandbox on Linux (containers, CI)
+  const noSandbox = process.platform === 'linux' && process.getuid?.() === 0 ? ['--no-sandbox'] : [];
+  const args = [...mode, ...noSandbox, '--no-first-run', '--no-default-browser-check', '--force-device-scale-factor=1', '--autoplay-policy=no-user-gesture-required', `--user-data-dir=${profile}`, `--window-size=${width},${height}`, '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=0', 'about:blank'];
   const proc = spawn(CHROME, args, { stdio: 'ignore' });
   const portFile = join(profile, 'DevToolsActivePort');
   for (let i = 0; i < 100 && !existsSync(portFile); i += 1) await sleep(100);
